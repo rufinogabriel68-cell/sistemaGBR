@@ -1,0 +1,937 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0a0d14;--bg2:#111520;--bg3:#161b28;--bg4:#1c2235;--bg5:#222840;
+--border:#ffffff14;--border2:#ffffff22;
+--blue:#6900be;--blue2:#1d4ed8;--blue3:#93c5fd;
+--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--purple:#a855f7;--teal:#14b8a6;
+--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--r:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:12px;height:50px;flex-shrink:0}
+.logo{font-size:15px;font-weight:700;color:var(--blue);white-space:nowrap}
+.logo-sub{color:var(--text3);font-weight:400;font-size:11px}
+.nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.nb{background:transparent;border:none;color:var(--text2);padding:5px 9px;border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s;white-space:nowrap}
+.nb:hover{background:var(--bg4);color:var(--text)}
+.nb.active{background:var(--blue2);color:#fff}
+.content{flex:1;padding:16px;overflow-y:auto;min-width:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;min-width:0}
+.kpi-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-val{font-size:20px;font-weight:700}
+.kpi-sub{font-size:10px;margin-top:3px;color:var(--text3)}
+.kpi.bl .kpi-val{color:var(--blue3)}.kpi.gr .kpi-val{color:var(--green)}.kpi.am .kpi-val{color:var(--amber)}.kpi.pu .kpi-val{color:var(--purple)}.kpi.re .kpi-val{color:var(--red)}.kpi.te .kpi-val{color:var(--teal)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;min-width:0}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;min-width:0;overflow:hidden}
+.card-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.sh-title{font-size:14px;font-weight:600}
+.btn{background:var(--blue2);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn:hover{background:var(--blue)}
+.btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn.ghost:hover{background:var(--bg4);color:var(--text)}
+.btn.danger{background:#7f1d1d}.btn.danger:hover{background:var(--red)}
+.btn.success{background:#14532d}.btn.success:hover{background:var(--green);color:#000}
+.btn.amber{background:#78350f}.btn.amber:hover{background:var(--amber);color:#000}
+.btn.sm{padding:3px 7px;font-size:11px}
+.tw{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{background:var(--bg4);color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg4)}
+.badge{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge.gr{background:#22c55e22;color:var(--green)}.badge.am{background:#f59e0b22;color:var(--amber)}.badge.re{background:#ef444422;color:var(--red)}.badge.bl{background:#3b82f622;color:var(--blue3)}.badge.pu{background:#a855f722;color:var(--purple)}.badge.te{background:#14b8a622;color:var(--teal)}
+.tag{display:inline-flex;align-items:center;background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;color:var(--text2)}
+.sb{background:var(--bg4);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;color:var(--text);font-size:12px;width:100%;margin-bottom:12px;outline:none}
+.sb:focus{border-color:var(--blue)}
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px}
+.fl{display:flex;flex-direction:column;gap:4px}
+.fl label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.fl input,.fl select,.fl textarea{background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:6px 9px;font-size:12px;outline:none;transition:border .15s;width:100%}
+.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:var(--blue)}
+.fl select option{background:var(--bg3)}
+.fl textarea{resize:vertical;min-height:60px}
+.modal-ov{position:fixed;top:0;left:0;right:0;bottom:0;background:#000c;z-index:999;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:20px;width:min(680px,100%);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.xbtn{background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:17px}
+.xbtn:hover{color:var(--text)}
+.prog{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:5px}
+.prog-f{height:100%;border-radius:3px;background:var(--blue);transition:width .5s}
+.prog-f.gr{background:var(--green)}.prog-f.am{background:var(--amber)}.prog-f.re{background:var(--red)}
+.bar-chart{display:flex;flex-direction:column;gap:6px;min-width:0}
+.bar-row{display:flex;align-items:center;gap:6px;min-width:0}
+.bar-lbl{width:100px;font-size:11px;color:var(--text2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.bar-track{flex:1;background:var(--bg4);border-radius:3px;height:14px;min-width:0;overflow:hidden}
+.bar-f{height:100%;border-radius:3px;transition:width .4s}
+.bar-val{width:65px;font-size:11px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis}
+.mini-list{display:flex;flex-direction:column;gap:7px}
+.mi{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:var(--bg4);border-radius:6px;font-size:12px;gap:8px;min-width:0}
+.mi > div:first-child{min-width:0;overflow:hidden}
+.sec-tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.stab{background:transparent;border:none;color:var(--text2);padding:5px 12px;cursor:pointer;font-size:12px;border-radius:5px 5px 0 0}
+.stab.active{color:var(--blue3);border-bottom:2px solid var(--blue)}
+.alert-box{border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alert-box.warn{background:#78350f22;border:1px solid #f59e0b44;color:var(--amber)}
+.alert-box.danger{background:#7f1d1d22;border:1px solid #ef444444;color:var(--red)}
+.alert-box.ok{background:#14532d22;border:1px solid #22c55e44;color:var(--green)}
+.alert-box.info{background:#1d4ed822;border:1px solid #3b82f644;color:var(--blue3)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
+.cal-day{background:var(--bg4);border-radius:5px;padding:5px 3px;text-align:center;font-size:11px;color:var(--text2);min-height:52px;cursor:pointer}
+.cal-day:hover{background:var(--bg5)}
+.cal-day.has-ev{border:1px solid var(--blue2)}
+.cal-day.today{border:1px solid var(--blue);color:var(--blue3)}
+.cal-day .dn{font-weight:600;font-size:12px;color:var(--text)}
+.cal-ev{font-size:9px;background:var(--blue2);border-radius:3px;padding:1px 3px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+.cal-ev.am{background:#78350f}.cal-ev.gr{background:#14532d}
+.cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+.cal-hdr span{text-align:center;font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase}
+.config-section{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.config-sec-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.maq-table{width:100%;border-collapse:collapse}
+.maq-table th{background:var(--bg4);color:var(--text3);font-size:10px;text-transform:uppercase;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.maq-table td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px}
+.maq-table td input{background:var(--bg5);border:1px solid var(--border2);color:var(--text);border-radius:5px;padding:4px 7px;font-size:12px;width:72px;outline:none}
+.maq-table td input:focus{border-color:var(--blue)}
+.sync-bar{background:var(--bg2);border-top:1px solid var(--border);padding:6px 16px;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text3);flex-shrink:0}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.orc-detail-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.orc-detail-lbl{color:var(--text3);width:130px;flex-shrink:0;font-size:11px;text-transform:uppercase;letter-spacing:.3px;padding-top:1px}
+.orc-detail-val{color:var(--text);flex:1}
+@media(max-width:640px){.row2{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.nb{padding:4px 6px;font-size:10px}.bar-lbl{width:70px}}
+</style>
+
+<div class="app">
+<div class="topbar">
+  <div class="logo" id="top-logo">GBR SOLUÇÕES <span class="logo-sub" id="top-sub">· Sistema de Gestão</span></div>
+  <nav class="nav">
+    <button class="nb active" onclick="pg('dash')">📊 Dashboard</button>
+    <button class="nb" onclick="pg('servicos')">🔧 Serviços</button>
+    <button class="nb" onclick="pg('calc')">🧮 Calculadora</button>
+    <button class="nb" onclick="pg('orc')">📋 Orçamentos</button>
+    <button class="nb" onclick="pg('clientes')">👥 Clientes</button>
+    <button class="nb" onclick="pg('estoque')">📦 Estoque</button>
+    <button class="nb" onclick="pg('agenda')">📅 Agenda</button>
+    <button class="nb" onclick="pg('fin')">💰 Financeiro</button>
+    <button class="nb" onclick="pg('config')">⚙️ Config</button>
+  </nav>
+</div>
+<div class="content" id="root"></div>
+<div class="sync-bar">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span id="sync-msg">Não configurado — vá em ⚙️ Config → Nuvem para habilitar sincronização</span>
+  <div style="margin-left:auto;display:flex;gap:6px">
+    <button class="btn ghost" style="padding:3px 10px;font-size:10px" onclick="exportJSON()">📥 Exportar JSON</button>
+    <button class="btn ghost" style="padding:3px 10px;font-size:10px" onclick="importJSON()">📤 Importar JSON</button>
+    <button class="btn" style="padding:3px 10px;font-size:10px" onclick="syncCloud()">☁️ Sincronizar</button>
+  </div>
+</div>
+</div>
+<div id="mroot"></div>
+<input type="file" id="file-import" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+const S={
+  page:'dash',
+  cfg:{
+    empresa:'GBR Soluções',sub:'Sobrinho de Aluguel',cnpj:'',tel:'(11) 99561-2321',cidade:'Arujá, SP',logoText:'GBR',
+    metaMensal:3000,metaSemanal:750,metaAnual:36000,
+    impostoMEI:0,impostoNF:10,deslBase:30,deslKmExtra:1.5,urgencial:50,
+    jsonbinKey:'',jsonbinBin:'',
+    maquininha:{debito:1.99,credito1:2.99,credito2:4.99,credito3:5.49,credito4:5.99,credito5:6.49,credito6:6.99,credito7:7.49,credito8:7.99,credito9:8.49,credito10:8.99,credito11:9.49,credito12:9.99}
+  },
+  services:[
+    {id:1,nome:'Formatação PC/Notebook',cat:'Informática',sub:'Computadores',minVal:120,medVal:150,maxVal:200,tempo:'2h',dific:'Médio',material:0,mdo:150,margem:30,tipo:'unitario',garantia:'30 dias',inclMat:false},
+    {id:2,nome:'Remoção de Vírus',cat:'Informática',sub:'Segurança',minVal:80,medVal:100,maxVal:150,tempo:'1.5h',dific:'Médio',material:0,mdo:100,margem:30,tipo:'unitario',garantia:'15 dias',inclMat:false},
+    {id:3,nome:'Upgrade SSD',cat:'Informática',sub:'Hardware',minVal:80,medVal:120,maxVal:180,tempo:'2h',dific:'Médio',material:80,mdo:80,margem:25,tipo:'unitario',garantia:'90 dias',inclMat:true},
+    {id:4,nome:'Troca de Memória RAM',cat:'Notebook',sub:'Hardware',minVal:60,medVal:80,maxVal:120,tempo:'45min',dific:'Fácil',material:60,mdo:50,margem:20,tipo:'unitario',garantia:'90 dias',inclMat:true},
+    {id:5,nome:'Troca de Tela Notebook',cat:'Notebook',sub:'Hardware',minVal:200,medVal:280,maxVal:400,tempo:'2.5h',dific:'Difícil',material:200,mdo:100,margem:25,tipo:'unitario',garantia:'90 dias',inclMat:true},
+    {id:6,nome:'Limpeza Interna',cat:'Notebook',sub:'Manutenção',minVal:80,medVal:100,maxVal:140,tempo:'1.5h',dific:'Fácil',material:15,mdo:80,margem:30,tipo:'unitario',garantia:'—',inclMat:true},
+    {id:7,nome:'Config. de Roteador',cat:'Redes',sub:'Wi-Fi',minVal:60,medVal:80,maxVal:120,tempo:'1h',dific:'Fácil',material:0,mdo:80,margem:30,tipo:'unitario',garantia:'—',inclMat:false},
+    {id:8,nome:'Passagem Cabo de Rede',cat:'Redes',sub:'Infra',minVal:20,medVal:25,maxVal:35,tempo:'var',dific:'Médio',material:5,mdo:20,margem:25,tipo:'metro',garantia:'—',inclMat:true},
+    {id:9,nome:'Instalação Câmera CFTV',cat:'CFTV',sub:'Câmeras',minVal:120,medVal:160,maxVal:250,tempo:'2h',dific:'Médio',material:80,mdo:120,margem:30,tipo:'unitario',garantia:'—',inclMat:true},
+    {id:10,nome:'Suporte de TV',cat:'TV e Monitores',sub:'Instalação',minVal:80,medVal:120,maxVal:180,tempo:'1h',dific:'Fácil',material:0,mdo:100,margem:30,tipo:'unitario',garantia:'—',inclMat:false},
+    {id:11,nome:'Montagem PC Gamer',cat:'Gamer',sub:'Montagem',minVal:150,medVal:200,maxVal:350,tempo:'4h',dific:'Difícil',material:0,mdo:200,margem:35,tipo:'unitario',garantia:'30 dias',inclMat:false},
+    {id:12,nome:'Visita Técnica',cat:'Serviços Gerais',sub:'Consultoria',minVal:50,medVal:80,maxVal:100,tempo:'1h',dific:'Fácil',material:0,mdo:80,margem:20,tipo:'unitario',garantia:'—',inclMat:false},
+    {id:13,nome:'Instalação de Tomada',cat:'Elétrica',sub:'Pontos',minVal:60,medVal:80,maxVal:120,tempo:'1h',dific:'Médio',material:20,mdo:60,margem:30,tipo:'unitario',garantia:'—',inclMat:true},
+    {id:14,nome:'Sistema CFTV Completo',cat:'CFTV',sub:'Sistemas',minVal:800,medVal:1200,maxVal:2500,tempo:'8h+',dific:'Difícil',material:600,mdo:600,margem:35,tipo:'fechado',garantia:'90 dias',inclMat:true},
+  ],
+  orc:[
+    {id:'ORC-001',cliente:'João Silva',tel:'(11)99999-0001',end:'Arujá',tipo:'Formatação + Antivírus',data:'2025-05-08',valor:250,status:'Aprovado',lucro:85,tempo:'3h',obs:'Cliente recorrente, solicitou backup antes da formatação. Trazer pendrive 32GB.'},
+    {id:'ORC-002',cliente:'Maria Santos',tel:'(11)98888-0002',end:'Arujá',tipo:'CFTV 4 câmeras',data:'2025-05-09',valor:640,status:'Aprovado',lucro:220,tempo:'8h',obs:'Instalação externa. 2 câmeras na frente e 2 no fundo. DVR já existente.'},
+    {id:'ORC-003',cliente:'Carlos Oliveira',tel:'(11)97777-0003',end:'Santa Isabel',tipo:'PC Gamer',data:'2025-05-10',valor:200,status:'Aguardando',lucro:70,tempo:'4h',obs:'Aguardando confirmação do cliente. Peças por conta dele.'},
+    {id:'ORC-004',cliente:'Ana Costa',tel:'(11)96666-0004',end:'Arujá',tipo:'TV + Suporte',data:'2025-05-07',valor:130,status:'Aprovado',lucro:50,tempo:'1.5h',obs:'TV 55 polegadas, parede de gesso. Verificar ancoragem.'},
+    {id:'ORC-005',cliente:'Pedro Lima',tel:'(11)95555-0005',end:'Guararema',tipo:'Config. Rede',data:'2025-05-06',valor:90,status:'Recusado',lucro:0,tempo:'1h',obs:'Cliente achou caro. Retornar com proposta de R$70.'},
+  ],
+  clientes:[
+    {id:1,nome:'João Silva',tel:'(11)99999-0001',end:'Arujá, SP',email:'joao@email.com',tipo:'VIP',servicos:3,gasto:780,obs:'Cliente fiel desde 2024'},
+    {id:2,nome:'Maria Santos',tel:'(11)98888-0002',end:'Arujá, SP',email:'maria@email.com',tipo:'Recorrente',servicos:2,gasto:640,obs:''},
+    {id:3,nome:'Carlos Oliveira',tel:'(11)97777-0003',end:'Santa Isabel, SP',email:'',tipo:'Novo',servicos:1,gasto:200,obs:'Indicação da Maria'},
+    {id:4,nome:'Ana Costa',tel:'(11)96666-0004',end:'Arujá, SP',email:'ana@email.com',tipo:'Recorrente',servicos:2,gasto:310,obs:''},
+  ],
+  estoque:[
+    {id:1,nome:'SSD 240GB',cat:'Hardware',qtd:3,qtdMin:2,custo:85,fornecedor:'TechSuprimentos',obs:''},
+    {id:2,nome:'Memória RAM 8GB DDR4',cat:'Hardware',qtd:2,qtdMin:2,custo:120,fornecedor:'TechSuprimentos',obs:''},
+    {id:3,nome:'Pasta Térmica',cat:'Manutenção',qtd:5,qtdMin:3,custo:12,fornecedor:'Mercado Livre',obs:''},
+    {id:4,nome:'Cabo HDMI 2m',cat:'Cabos',qtd:4,qtdMin:2,custo:18,fornecedor:'Eletro Arujá',obs:''},
+    {id:5,nome:'Cabo de Rede CAT6 cx50m',cat:'Cabos',qtd:1,qtdMin:1,custo:95,fornecedor:'NetCabos',obs:''},
+    {id:6,nome:'Suporte TV Fixo',cat:'Instalação',qtd:0,qtdMin:1,custo:45,fornecedor:'Eletro Arujá',obs:'REPOR URGENTE'},
+    {id:7,nome:'Tomada 2P+T Padrão',cat:'Elétrica',qtd:8,qtdMin:5,custo:8,fornecedor:'Elétrica Arujá',obs:''},
+    {id:8,nome:'Câmera CFTV 1080p',cat:'CFTV',qtd:2,qtdMin:2,custo:180,fornecedor:'SegurançaTech',obs:''},
+  ],
+  movEstoque:[
+    {data:'2025-05-08',item:'SSD 240GB',tipo:'Saída',qtd:1,obs:'ORC-001'},
+    {data:'2025-05-07',item:'Pasta Térmica',tipo:'Saída',qtd:2,obs:'ORC-004'},
+    {data:'2025-05-06',item:'SSD 240GB',tipo:'Entrada',qtd:2,obs:'Compra fornecedor'},
+  ],
+  agenda:[
+    {id:1,dia:11,titulo:'João Silva - Formatação',hora:'09:00',status:'Confirmado',tipo:'Serviço',obs:'Levar pendrive bootável'},
+    {id:2,dia:12,titulo:'Maria Santos - CFTV',hora:'14:00',status:'Confirmado',tipo:'Instalação',obs:'4 câmeras'},
+    {id:3,dia:13,titulo:'Carlos - PC Gamer',hora:'10:00',status:'Aguardando',tipo:'Orçamento',obs:'Visita técnica'},
+    {id:4,dia:15,titulo:'Visita comercial',hora:'15:30',status:'Confirmado',tipo:'Comercial',obs:'Empresa na R. das Flores'},
+    {id:5,dia:18,titulo:'Ana Costa - TV',hora:'11:00',status:'Aguardando',tipo:'Serviço',obs:'Suporte fixo'},
+  ],
+  gastos:[
+    {desc:'Combustível',valor:80,data:'2025-05-09'},
+    {desc:'Material CFTV',valor:180,data:'2025-05-08'},
+    {desc:'Ferramentas',valor:120,data:'2025-05-07'},
+  ],
+  calcItems:[],calcMode:'medio',calcDesc:0,calcUrg:0,calcDesl:0,calcCom:0,
+  nextOrc:6,nextEst:9,nextCli:5,nextAg:6,
+  srvSearch:'',orcFilter:'',cliFilter:'',estSearch:'',estTab:'estoque',
+  lastSync:null
+};
+
+// ===================== SYNC / STORAGE =====================
+function getSyncState(){
+  const d=document.getElementById('sync-dot');
+  const m=document.getElementById('sync-msg');
+  return{d,m};
+}
+function setSyncStatus(state,msg){
+  const{d,m}=getSyncState();
+  d.className='sync-dot '+state;
+  m.textContent=msg;
+}
+
+async function syncCloud(){
+  if(!S.cfg.jsonbinKey||!S.cfg.jsonbinBin){
+    alert('Configure a API Key e Bin ID do JSONBin.io em ⚙️ Config → Nuvem antes de sincronizar.');
+    pg('config');return;
+  }
+  setSyncStatus('loading','Sincronizando com a nuvem...');
+  const payload=JSON.parse(JSON.stringify(S));
+  delete payload.page;delete payload.srvSearch;delete payload.orcFilter;delete payload.cliFilter;delete payload.estSearch;delete payload.estTab;delete payload.lastSync;
+  try{
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${S.cfg.jsonbinBin}`,{
+      method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':S.cfg.jsonbinKey},
+      body:JSON.stringify(payload)
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    S.lastSync=new Date();
+    setSyncStatus('ok','Sincronizado em '+S.lastSync.toLocaleTimeString('pt-BR'));
+  }catch(e){
+    setSyncStatus('err','Erro na sincronização: '+e.message);
+  }
+}
+
+async function loadCloud(){
+  if(!S.cfg.jsonbinKey||!S.cfg.jsonbinBin)return;
+  setSyncStatus('loading','Carregando dados da nuvem...');
+  try{
+    const r=await fetch(`https://api.jsonbin.io/v3/b/${S.cfg.jsonbinBin}/latest`,{
+      headers:{'X-Master-Key':S.cfg.jsonbinKey}
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const json=await r.json();
+    const data=json.record;
+    Object.assign(S,data);
+    S.page='dash';
+    setSyncStatus('ok','Carregado da nuvem em '+new Date().toLocaleTimeString('pt-BR'));
+    render();
+  }catch(e){
+    setSyncStatus('err','Erro ao carregar: '+e.message);
+  }
+}
+
+function exportJSON(){
+  const payload=JSON.parse(JSON.stringify(S));
+  delete payload.page;delete payload.srvSearch;delete payload.orcFilter;delete payload.cliFilter;delete payload.estSearch;delete payload.estTab;delete payload.lastSync;
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='gbr-solucoes-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  setSyncStatus('ok','Exportado em '+new Date().toLocaleTimeString('pt-BR'));
+}
+
+function importJSON(){document.getElementById('file-import').click();}
+function handleImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      Object.assign(S,data);
+      S.page='dash';
+      setSyncStatus('ok','Importado com sucesso em '+new Date().toLocaleTimeString('pt-BR'));
+      render();
+    }catch(err){setSyncStatus('err','Arquivo inválido');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// ===================== NAVEGAÇÃO =====================
+function pg(p){
+  S.page=p;
+  document.querySelectorAll('.nb').forEach(b=>{
+    const map={dash:'📊',servicos:'🔧',calc:'🧮',orc:'📋',clientes:'👥',estoque:'📦',agenda:'📅',fin:'💰',config:'⚙️'};
+    b.classList.toggle('active',b.textContent.trim().startsWith(map[p]||'__'));
+  });
+  render();
+}
+function render(){
+  const pages={dash:rDash,servicos:rServicos,calc:rCalc,orc:rOrc,clientes:rClientes,estoque:rEstoque,agenda:rAgenda,fin:rFin,config:rConfig};
+  document.getElementById('root').innerHTML=(pages[S.page]||rDash)();
+}
+
+function fmtR(n){return 'R$ '+Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+// ===================== DASHBOARD =====================
+function rDash(){
+  const aprov=S.orc.filter(o=>o.status==='Aprovado');
+  const fat=aprov.reduce((a,o)=>a+o.valor,0);
+  const lucro=aprov.reduce((a,o)=>a+o.lucro,0);
+  const gastoT=S.gastos.reduce((a,g)=>a+g.valor,0);
+  const saldo=lucro-gastoT;
+  const tk=aprov.length?fat/aprov.length:0;
+  const pct=Math.min(100,(fat/S.cfg.metaMensal)*100);
+  const baixoEst=S.estoque.filter(e=>e.qtd<=e.qtdMin).length;
+  const maxMed=S.services.reduce((a,s)=>Math.max(a,s.medVal),1);
+  return `
+  <div class="sh"><div class="sh-title">📊 Dashboard — ${S.cfg.empresa}</div><div style="font-size:11px;color:var(--text3)">Maio 2025</div></div>
+  ${baixoEst>0?`<div class="alert-box warn">⚠️ ${baixoEst} item(ns) com estoque baixo <button class="btn amber" style="padding:2px 8px;font-size:10px;margin-left:6px" onclick="pg('estoque')">Ver estoque</button></div>`:''}
+  <div class="kpi-grid">
+    <div class="kpi bl"><div class="kpi-lbl">Faturamento</div><div class="kpi-val">${fmtR(fat)}</div><div class="kpi-sub">${aprov.length} serviços</div></div>
+    <div class="kpi gr"><div class="kpi-lbl">Lucro líquido</div><div class="kpi-val">${fmtR(saldo)}</div><div class="kpi-sub">após gastos</div></div>
+    <div class="kpi am"><div class="kpi-lbl">Ticket médio</div><div class="kpi-val">${fmtR(tk)}</div></div>
+    <div class="kpi pu"><div class="kpi-lbl">Clientes</div><div class="kpi-val">${S.clientes.length}</div><div class="kpi-sub">${S.clientes.filter(c=>c.tipo==='VIP').length} VIP</div></div>
+    <div class="kpi te"><div class="kpi-lbl">Estoque OK</div><div class="kpi-val">${S.estoque.length-baixoEst}/${S.estoque.length}</div></div>
+    <div class="kpi"><div class="kpi-lbl">Meta mensal</div><div class="kpi-val" style="color:var(--text)">${fmtR(S.cfg.metaMensal)}</div><div class="prog"><div class="prog-f ${pct>=100?'gr':pct>=60?'am':'re'}" style="width:${pct.toFixed(0)}%"></div></div><div class="kpi-sub">${pct.toFixed(0)}% atingido</div></div>
+  </div>
+  <div class="row2">
+    <div class="card" style="overflow:hidden;min-width:0">
+      <div class="card-title">🏆 Top serviços por valor médio</div>
+      <div class="bar-chart">
+        ${[...S.services].sort((a,b)=>b.medVal-a.medVal).slice(0,5).map(s=>`
+        <div class="bar-row">
+          <div class="bar-lbl">${s.nome.length>13?s.nome.slice(0,13)+'…':s.nome}</div>
+          <div class="bar-track"><div class="bar-f" style="width:${Math.round((s.medVal/maxMed)*100)}%;background:var(--blue)"></div></div>
+          <div class="bar-val" style="color:var(--blue3)">R$ ${s.medVal}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Últimos orçamentos</div>
+      <div class="mini-list">
+        ${[...S.orc].reverse().slice(0,4).map(o=>`<div class="mi">
+          <div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.cliente}</div><div style="color:var(--text3);font-size:10px">${o.data}</div></div>
+          <div style="text-align:right;flex-shrink:0"><div style="font-weight:700;color:var(--blue3)">R$ ${o.valor}</div><span class="badge ${o.status==='Aprovado'?'gr':o.status==='Aguardando'?'am':'re'}">${o.status}</span></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-title">📅 Próximos compromissos</div>
+      <div class="mini-list">
+        ${S.agenda.slice(0,4).map(a=>`<div class="mi">
+          <div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.titulo}</div><div style="color:var(--text3);font-size:10px">Dia ${a.dia} às ${a.hora}</div></div>
+          <span class="badge ${a.status==='Confirmado'?'gr':'am'}" style="flex-shrink:0">${a.status}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💡 Análise rápida</div>
+      <div class="mini-list">
+        <div class="mi"><span>Taxa de aprovação</span><span style="color:var(--green);font-weight:700">${S.orc.length?Math.round(aprov.length/S.orc.length*100):0}%</span></div>
+        <div class="mi"><span>Margem média</span><span style="color:var(--green);font-weight:700">${fat?Math.round(lucro/fat*100):0}%</span></div>
+        <div class="mi"><span>Gastos do mês</span><span style="color:var(--red);font-weight:700">${fmtR(gastoT)}</span></div>
+        <div class="mi"><span>Meta semanal</span><span style="color:var(--amber);font-weight:700">${fmtR(S.cfg.metaSemanal)}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===================== SERVIÇOS =====================
+function rServicos(){
+  const f=S.services.filter(s=>s.nome.toLowerCase().includes(S.srvSearch.toLowerCase())||s.cat.toLowerCase().includes(S.srvSearch.toLowerCase()));
+  return `
+  <div class="sh"><div class="sh-title">🔧 Serviços <span class="tag">${S.services.length}</span></div><button class="btn" onclick="mNovoServ()">+ Novo</button></div>
+  <input class="sb" placeholder="🔍 Buscar..." value="${S.srvSearch}" oninput="S.srvSearch=this.value;render()">
+  <div class="tw"><table>
+    <thead><tr><th style="width:28%">Serviço</th><th style="width:18%">Categoria</th><th style="width:9%">Tipo</th><th style="width:10%">Mín</th><th style="width:10%">Médio</th><th style="width:10%">Máx</th><th style="width:15%">Ações</th></tr></thead>
+    <tbody>${f.map(s=>`<tr>
+      <td><div style="font-weight:600">${s.nome}</div><div style="font-size:10px;color:var(--text3)">${s.tempo} · ${s.dific}</div></td>
+      <td><span class="tag">${s.cat}</span></td>
+      <td><span class="badge bl">${s.tipo}</span></td>
+      <td style="color:var(--text2)">R$ ${s.minVal}</td>
+      <td style="color:var(--blue3);font-weight:700">R$ ${s.medVal}</td>
+      <td style="color:var(--green)">R$ ${s.maxVal}</td>
+      <td><div style="display:flex;gap:3px">
+        <button class="btn ghost sm" onclick="mEditServ(${s.id})">✏️</button>
+        <button class="btn ghost sm" onclick="addToCalc(${s.id})">🧮</button>
+        <button class="btn danger sm" onclick="delServ(${s.id})">🗑</button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ===================== CALCULADORA =====================
+function rCalc(){
+  const mk={minimo:'minVal',medio:'medVal',premium:'maxVal'};
+  const key=mk[S.calcMode];
+  let sub=S.calcItems.reduce((a,i)=>{const s=S.services.find(x=>x.id===i.id);return a+(s?s[key]*i.qty:0);},0);
+  const desl=sub*S.calcDesl/100,urg=sub*S.calcUrg/100,desc=sub*S.calcDesc/100,com=sub*S.calcCom/100;
+  const custoT=S.calcItems.reduce((a,i)=>{const s=S.services.find(x=>x.id===i.id);return a+(s?(s.material+s.mdo)*i.qty:0);},0);
+  const total=sub+desl+urg-desc,lucro=total-custoT-com;
+  const marg=total>0?Math.round(lucro/total*100):0;
+  const maq=S.cfg.maquininha;
+  const calcMaq=p=>{const t=p===1?maq.credito1:maq['credito'+p]||0;return total*(1+t/100);};
+  return `
+  <div class="sh"><div class="sh-title">🧮 Calculadora</div><button class="btn" onclick="mSalvarOrc(${total.toFixed(2)},${lucro.toFixed(2)})">💾 Salvar Orçamento</button></div>
+  <div style="display:grid;grid-template-columns:1fr 350px;gap:14px;min-width:0">
+    <div style="min-width:0">
+      <div class="card" style="margin-bottom:10px">
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          ${['minimo','medio','premium'].map((m,i)=>`<div style="flex:1;background:${S.calcMode===m?'var(--blue2)':'var(--bg4)'};border:1px solid ${S.calcMode===m?'var(--blue)':'var(--border)'};border-radius:6px;padding:6px;text-align:center;cursor:pointer;font-size:11px;color:${S.calcMode===m?'#fff':'var(--text2)'}" onclick="S.calcMode='${m}';render()">${['💰 Econômico','⚖️ Médio','💎 Premium'][i]}</div>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <select class="sb" id="csel" style="margin:0;flex:1">
+            <option value="">Selecionar serviço...</option>
+            ${S.services.map(s=>`<option value="${s.id}">[${s.cat}] ${s.nome} — R$ ${s[key]}</option>`).join('')}
+          </select>
+          <input type="number" id="cqty" value="1" min="1" style="width:65px;background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:6px 8px;font-size:12px;outline:none">
+          <button class="btn" onclick="addCI()">+</button>
+        </div>
+        ${S.calcItems.length===0?'<div style="text-align:center;color:var(--text3);padding:14px;font-size:12px">Nenhum serviço adicionado</div>':''}
+        ${S.calcItems.map((it,i)=>{const s=S.services.find(x=>x.id===it.id);if(!s)return'';return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.nome}</div><div style="font-size:10px;color:var(--text3)">${s.cat} · x${it.qty}</div></div><div style="font-weight:700;color:var(--blue3);flex-shrink:0">R$ ${(s[key]*it.qty).toFixed(0)}</div><button onclick="S.calcItems.splice(${i},1);render()" style="background:transparent;border:none;color:var(--red);cursor:pointer;flex-shrink:0">✕</button></div>`;}).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">Ajustes</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${[['Deslocamento','calcDesl',30],['Urgência','calcUrg',50],['Desconto','calcDesc',30],['Comissão','calcCom',20]].map(([lbl,k,max])=>`<div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px">${lbl}</div><div style="display:flex;align-items:center;gap:7px"><input type="range" min="0" max="${max}" step="1" value="${S[k]}" oninput="S.${k}=+this.value;render()" style="flex:1;accent-color:var(--blue)"><span style="font-size:11px;color:var(--blue3);min-width:30px;text-align:right;font-weight:600">${S[k]}%</span></div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="min-width:0">
+      <div style="background:var(--bg2);border:1px solid var(--blue2);border-radius:var(--r);padding:14px;margin-bottom:10px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Total do orçamento</div>
+        <div style="font-size:26px;font-weight:700;color:var(--blue3)">${fmtR(total)}</div>
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+          ${[['Subtotal',sub,'var(--text2)'],['+ Deslocamento',desl,'var(--text2)'],['+ Urgência',urg,'var(--text2)'],['- Desconto',-desc,'var(--amber)'],['Custo estimado',custoT,'var(--red)'],['Comissão',com,'var(--text2)'],['💰 Lucro',lucro,'var(--green)']].map(([l,v,c])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="color:var(--text2)">${l}</span><span style="color:${c};font-weight:600">R$ ${Math.abs(v).toFixed(2)}</span></div>`).join('')}
+          <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:12px"><span style="font-weight:700">Margem</span><span style="color:${marg>25?'var(--green)':marg>15?'var(--amber)':'var(--red)'};font-weight:700">${marg}%</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">💳 Simulação pagamento</div>
+        <div style="display:flex;flex-direction:column;gap:5px;font-size:11px">
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">💸 PIX (-3%)</span><span style="color:var(--green);font-weight:700">${fmtR(total*0.97)}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Débito (${maq.debito}%)</span><span style="font-weight:600">${fmtR(total*(1+maq.debito/100))}</span></div>
+          ${[1,2,3,6,12].map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">${p}x crédito</span><span style="font-weight:600">${fmtR(calcMaq(p)/p)}/parc</span></div>`).join('')}
+        </div>
+        <button class="btn ghost" style="width:100%;margin-top:10px;justify-content:center" onclick="S.calcItems=[];S.calcDesc=0;S.calcUrg=0;S.calcDesl=0;S.calcCom=0;render()">🔄 Limpar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===================== ORÇAMENTOS =====================
+function rOrc(){
+  const f=S.orc.filter(o=>o.cliente.toLowerCase().includes(S.orcFilter.toLowerCase())||o.tipo.toLowerCase().includes(S.orcFilter.toLowerCase())||o.status.toLowerCase().includes(S.orcFilter.toLowerCase()));
+  const aprov=S.orc.filter(o=>o.status==='Aprovado');
+  return `
+  <div class="sh"><div class="sh-title">📋 Orçamentos</div><button class="btn" onclick="mNovoOrc()">+ Novo</button></div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+    <div class="kpi bl"><div class="kpi-lbl">Faturado</div><div class="kpi-val">${fmtR(aprov.reduce((a,o)=>a+o.valor,0))}</div></div>
+    <div class="kpi gr"><div class="kpi-lbl">Aprovados</div><div class="kpi-val">${aprov.length}</div></div>
+    <div class="kpi am"><div class="kpi-lbl">Aguardando</div><div class="kpi-val">${S.orc.filter(o=>o.status==='Aguardando').length}</div></div>
+    <div class="kpi re"><div class="kpi-lbl">Recusados</div><div class="kpi-val">${S.orc.filter(o=>o.status==='Recusado').length}</div></div>
+  </div>
+  <input class="sb" placeholder="🔍 Buscar..." value="${S.orcFilter}" oninput="S.orcFilter=this.value;render()">
+  <div class="tw"><table>
+    <thead><tr><th style="width:8%">Nº</th><th style="width:17%">Cliente</th><th style="width:21%">Serviço</th><th style="width:10%">Data</th><th style="width:11%">Valor</th><th style="width:9%">Lucro</th><th style="width:10%">Status</th><th style="width:14%">Ações</th></tr></thead>
+    <tbody>${f.map(o=>`<tr>
+      <td style="color:var(--text3);font-family:monospace;font-size:10px">${o.id}</td>
+      <td><div style="font-weight:600">${o.cliente}</div><div style="font-size:10px;color:var(--text3)">${o.tel}</div></td>
+      <td style="font-size:11px">${o.tipo}</td>
+      <td style="color:var(--text2);font-size:11px">${o.data}</td>
+      <td style="font-weight:700;color:var(--blue3)">R$ ${o.valor}</td>
+      <td style="color:var(--green)">R$ ${o.lucro}</td>
+      <td><span class="badge ${o.status==='Aprovado'?'gr':o.status==='Aguardando'?'am':'re'}">${o.status}</span></td>
+      <td><div style="display:flex;gap:3px">
+        <button class="btn ghost sm" title="Ver detalhes" onclick="mVerOrc('${o.id}')">👁</button>
+        <button class="btn ghost sm" title="Editar" onclick="mEditOrc('${o.id}')">✏️</button>
+        <button class="btn ghost sm" title="Duplicar" onclick="dupOrc('${o.id}')">📄</button>
+        <button class="btn danger sm" onclick="delOrc('${o.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ===================== CLIENTES =====================
+function rClientes(){
+  const f=S.clientes.filter(c=>c.nome.toLowerCase().includes(S.cliFilter.toLowerCase())||c.tipo.toLowerCase().includes(S.cliFilter.toLowerCase()));
+  const tipos={VIP:'pu',Recorrente:'bl',Novo:'te',Inadimplente:'re'};
+  return `
+  <div class="sh"><div class="sh-title">👥 Clientes <span class="tag">${S.clientes.length}</span></div><button class="btn" onclick="mNovoCli()">+ Novo</button></div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+    <div class="kpi pu"><div class="kpi-lbl">VIP</div><div class="kpi-val">${S.clientes.filter(c=>c.tipo==='VIP').length}</div></div>
+    <div class="kpi bl"><div class="kpi-lbl">Recorrentes</div><div class="kpi-val">${S.clientes.filter(c=>c.tipo==='Recorrente').length}</div></div>
+    <div class="kpi te"><div class="kpi-lbl">Novos</div><div class="kpi-val">${S.clientes.filter(c=>c.tipo==='Novo').length}</div></div>
+    <div class="kpi gr"><div class="kpi-lbl">Total gasto</div><div class="kpi-val">${fmtR(S.clientes.reduce((a,c)=>a+c.gasto,0))}</div></div>
+  </div>
+  <input class="sb" placeholder="🔍 Buscar..." value="${S.cliFilter}" oninput="S.cliFilter=this.value;render()">
+  <div class="tw"><table>
+    <thead><tr><th style="width:22%">Nome</th><th style="width:16%">Telefone</th><th style="width:15%">Cidade</th><th style="width:10%">Tipo</th><th style="width:9%">Serviços</th><th style="width:13%">Total gasto</th><th style="width:15%">Ações</th></tr></thead>
+    <tbody>${f.map(c=>`<tr>
+      <td><div style="display:flex;align-items:center;gap:7px"><div style="width:28px;height:28px;border-radius:50%;background:var(--bg5);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--blue3);flex-shrink:0">${c.nome.split(' ').map(n=>n[0]).slice(0,2).join('')}</div><div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis">${c.nome}</div><div style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis">${c.email||'—'}</div></div></div></td>
+      <td>${c.tel}</td>
+      <td style="font-size:11px;color:var(--text2)">${c.end}</td>
+      <td><span class="badge ${tipos[c.tipo]||'te'}">${c.tipo}</span></td>
+      <td style="text-align:center;font-weight:700;color:var(--blue3)">${c.servicos}</td>
+      <td style="font-weight:700;color:var(--green)">R$ ${c.gasto}</td>
+      <td><div style="display:flex;gap:3px"><button class="btn ghost sm" onclick="mEditCli(${c.id})">✏️</button><button class="btn danger sm" onclick="delCli(${c.id})">🗑</button></div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ===================== ESTOQUE =====================
+function rEstoque(){
+  const critico=S.estoque.filter(e=>e.qtd===0);
+  const baixo=S.estoque.filter(e=>e.qtd>0&&e.qtd<=e.qtdMin);
+  const ok=S.estoque.filter(e=>e.qtd>e.qtdMin);
+  const f=S.estoque.filter(e=>e.nome.toLowerCase().includes(S.estSearch.toLowerCase())||e.cat.toLowerCase().includes(S.estSearch.toLowerCase()));
+  const valorTotal=S.estoque.reduce((a,e)=>a+e.custo*e.qtd,0);
+  return `
+  <div class="sh"><div class="sh-title">📦 Estoque</div><div style="display:flex;gap:6px"><button class="btn ghost" onclick="mMovEst()">📋 Movimentações</button><button class="btn" onclick="mNovoEst()">+ Item</button></div></div>
+  ${critico.length>0?`<div class="alert-box danger">🚨 Estoque ZERO: ${critico.map(e=>e.nome).join(', ')}</div>`:''}
+  ${baixo.length>0?`<div class="alert-box warn">⚠️ Abaixo do mínimo: ${baixo.map(e=>e.nome).join(', ')}</div>`:''}
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+    <div class="kpi gr"><div class="kpi-lbl">OK</div><div class="kpi-val">${ok.length}</div></div>
+    <div class="kpi am"><div class="kpi-lbl">Baixo</div><div class="kpi-val">${baixo.length}</div></div>
+    <div class="kpi re"><div class="kpi-lbl">Crítico</div><div class="kpi-val">${critico.length}</div></div>
+    <div class="kpi bl"><div class="kpi-lbl">Valor total</div><div class="kpi-val">${fmtR(valorTotal)}</div></div>
+  </div>
+  <div class="sec-tabs">
+    <button class="stab ${S.estTab==='estoque'?'active':''}" onclick="S.estTab='estoque';render()">Estoque atual</button>
+    <button class="stab ${S.estTab==='mov'?'active':''}" onclick="S.estTab='mov';render()">Movimentações</button>
+  </div>
+  ${S.estTab==='estoque'?`
+  <input class="sb" placeholder="🔍 Buscar..." value="${S.estSearch}" oninput="S.estSearch=this.value;render()">
+  <div class="tw"><table>
+    <thead><tr><th style="width:26%">Item</th><th style="width:13%">Categoria</th><th style="width:9%">Qtd</th><th style="width:9%">Mín</th><th style="width:13%">Custo unit.</th><th style="width:14%">Total</th><th style="width:16%">Ações</th></tr></thead>
+    <tbody>${f.map(e=>`<tr>
+      <td><div style="font-weight:600">${e.nome}</div><div style="font-size:10px;color:var(--text3)">${e.fornecedor}</div></td>
+      <td><span class="tag">${e.cat}</span></td>
+      <td><span style="font-size:14px;font-weight:700;color:${e.qtd===0?'var(--red)':e.qtd<=e.qtdMin?'var(--amber)':'var(--green)'}">${e.qtd}</span></td>
+      <td style="color:var(--text2)">${e.qtdMin}</td>
+      <td>R$ ${e.custo.toFixed(2)}</td>
+      <td style="font-weight:600;color:var(--blue3)">R$ ${(e.custo*e.qtd).toFixed(2)}</td>
+      <td><div style="display:flex;gap:3px"><button class="btn success sm" onclick="mEntrada(${e.id})">+ Entrada</button><button class="btn amber sm" onclick="mSaida(${e.id})">- Saída</button></div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`:`
+  <div class="tw"><table>
+    <thead><tr><th style="width:14%">Data</th><th style="width:30%">Item</th><th style="width:12%">Tipo</th><th style="width:9%">Qtd</th><th style="width:35%">Obs</th></tr></thead>
+    <tbody>${S.movEstoque.map(m=>`<tr><td style="font-size:11px;color:var(--text2)">${m.data}</td><td style="font-weight:600">${m.item}</td><td><span class="badge ${m.tipo==='Entrada'?'gr':'re'}">${m.tipo}</span></td><td style="font-weight:700;color:${m.tipo==='Entrada'?'var(--green)':'var(--red)'}">${m.tipo==='Entrada'?'+':'-'}${m.qtd}</td><td style="color:var(--text2);font-size:11px">${m.obs}</td></tr>`).join('')}</tbody>
+  </table></div>`}`;
+}
+
+// ===================== AGENDA =====================
+function rAgenda(){
+  const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const hoje=11,total=31,primeiro=4;
+  let cells=Array(primeiro).fill(null);
+  for(let d=1;d<=total;d++)cells.push(d);
+  while(cells.length%7!==0)cells.push(null);
+  const tc={Serviço:'',Instalação:'',Orçamento:'am',Comercial:'gr',Pessoal:''};
+  return `
+  <div class="sh"><div class="sh-title">📅 Agenda — Maio 2025</div><button class="btn" onclick="mNovoAg()">+ Compromisso</button></div>
+  <div class="cal-hdr">${dias.map(d=>`<span>${d}</span>`).join('')}</div>
+  <div class="cal-grid">
+    ${cells.map(d=>{
+      if(!d)return`<div style="min-height:52px"></div>`;
+      const evs=S.agenda.filter(a=>a.dia===d);
+      return`<div class="cal-day ${evs.length?'has-ev':''} ${d===hoje?'today':''}">
+        <div class="dn">${d}</div>
+        ${evs.map(e=>`<div class="cal-ev ${tc[e.tipo]||''}">${e.hora} ${e.titulo.split('-')[0].trim().slice(0,7)}</div>`).join('')}
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="margin-top:14px">
+    <div class="sh-title" style="margin-bottom:10px;font-size:13px">Todos os compromissos</div>
+    <div class="tw"><table>
+      <thead><tr><th style="width:7%">Dia</th><th style="width:8%">Hora</th><th style="width:28%">Título</th><th style="width:11%">Tipo</th><th style="width:11%">Status</th><th style="width:22%">Obs</th><th style="width:13%">Ações</th></tr></thead>
+      <tbody>${[...S.agenda].sort((a,b)=>a.dia-b.dia).map(a=>`<tr>
+        <td style="font-weight:700;color:var(--blue3)">${a.dia}</td>
+        <td style="color:var(--text2)">${a.hora}</td>
+        <td style="font-weight:600">${a.titulo}</td>
+        <td><span class="badge bl">${a.tipo}</span></td>
+        <td><span class="badge ${a.status==='Confirmado'?'gr':'am'}">${a.status}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${a.obs}</td>
+        <td><div style="display:flex;gap:3px">
+          <button class="btn ghost sm" onclick="toggleAgStatus(${a.id})">${a.status==='Confirmado'?'⏸':'✅'}</button>
+          <button class="btn danger sm" onclick="delAg(${a.id})">🗑</button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ===================== FINANCEIRO =====================
+function rFin(){
+  const aprov=S.orc.filter(o=>o.status==='Aprovado');
+  const fat=aprov.reduce((a,o)=>a+o.valor,0);
+  const lucro=aprov.reduce((a,o)=>a+o.lucro,0);
+  const gasto=S.gastos.reduce((a,g)=>a+g.valor,0);
+  const saldo=lucro-gasto;
+  return `
+  <div class="sh"><div class="sh-title">💰 Financeiro</div><button class="btn" onclick="mNovoGasto()">+ Gasto</button></div>
+  <div class="kpi-grid">
+    <div class="kpi bl"><div class="kpi-lbl">Faturamento</div><div class="kpi-val">${fmtR(fat)}</div></div>
+    <div class="kpi gr"><div class="kpi-lbl">Lucro bruto</div><div class="kpi-val">${fmtR(lucro)}</div></div>
+    <div class="kpi re"><div class="kpi-lbl">Gastos</div><div class="kpi-val">${fmtR(gasto)}</div></div>
+    <div class="kpi ${saldo>0?'gr':'re'}"><div class="kpi-lbl">Saldo líquido</div><div class="kpi-val">${fmtR(saldo)}</div></div>
+  </div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-title">🎯 Metas</div>
+      ${[['Meta mensal',fat,S.cfg.metaMensal],['Meta semanal',fat/4,S.cfg.metaSemanal],['Meta anual',fat,S.cfg.metaAnual]].map(([lbl,val,meta])=>{const p=Math.min(100,Math.round(val/meta*100));return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px"><span style="color:var(--text2)">${lbl}</span><span style="font-weight:700;color:${p>=100?'var(--green)':p>=60?'var(--amber)':'var(--red)'}">${p}%</span></div><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${fmtR(val)} / ${fmtR(meta)}</div><div class="prog"><div class="prog-f ${p>=100?'gr':p>=60?'am':'re'}" style="width:${p}%"></div></div></div>`;}).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">📊 Gastos</div>
+      <div class="bar-chart">
+        ${S.gastos.map(g=>`<div class="bar-row"><div class="bar-lbl">${g.desc}</div><div class="bar-track"><div class="bar-f" style="width:${gasto?Math.round(g.valor/gasto*100):0}%;background:var(--red)"></div></div><div class="bar-val" style="color:var(--red)">R$ ${g.valor}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">🧾 Lançamentos</div>
+    <div class="tw" style="border:none;margin-bottom:0"><table><thead><tr><th>Descrição</th><th>Data</th><th>Valor</th></tr></thead>
+    <tbody>${S.gastos.map(g=>`<tr><td>${g.desc}</td><td style="color:var(--text2)">${g.data}</td><td style="color:var(--red);font-weight:700">R$ ${g.valor.toFixed(2)}</td></tr>`).join('')}</tbody></table></div>
+  </div>`;
+}
+
+// ===================== CONFIGURAÇÕES =====================
+function rConfig(){
+  const maq=S.cfg.maquininha;
+  return `
+  <div class="sh"><div class="sh-title">⚙️ Configurações</div><button class="btn" onclick="salvarConfig()">💾 Salvar tudo</button></div>
+
+  <div class="config-section">
+    <div class="config-sec-title">🏢 Dados da Empresa</div>
+    <div class="fg">
+      <div class="fl"><label>Nome da empresa</label><input id="cf-emp" value="${S.cfg.empresa}"></div>
+      <div class="fl"><label>Subtítulo / slogan</label><input id="cf-sub" value="${S.cfg.sub}"></div>
+      <div class="fl"><label>CNPJ / CPF</label><input id="cf-cnpj" value="${S.cfg.cnpj}" placeholder="00.000.000/0001-00"></div>
+      <div class="fl"><label>Telefone / WhatsApp</label><input id="cf-tel" value="${S.cfg.tel}"></div>
+      <div class="fl"><label>Cidade / Estado</label><input id="cf-cid" value="${S.cfg.cidade}"></div>
+      <div class="fl"><label>Sigla logo (2-3 letras)</label><input id="cf-logo" value="${S.cfg.logoText}" maxlength="3"></div>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-sec-title">🎯 Metas Financeiras</div>
+    <div class="fg">
+      <div class="fl"><label>Meta mensal (R$)</label><input id="cf-mmen" type="number" value="${S.cfg.metaMensal}"></div>
+      <div class="fl"><label>Meta semanal (R$)</label><input id="cf-msem" type="number" value="${S.cfg.metaSemanal}"></div>
+      <div class="fl"><label>Meta anual (R$)</label><input id="cf-manu" type="number" value="${S.cfg.metaAnual}"></div>
+    </div>
+    <div style="margin-top:10px;background:var(--bg4);border-radius:8px;padding:10px;font-size:12px;color:var(--text2)">
+      💡 Meta diária: <strong style="color:var(--blue3)">R$ ${Math.round(S.cfg.metaMensal/22)}</strong> · Meta semanal automática: <strong style="color:var(--amber)">R$ ${Math.round(S.cfg.metaMensal/4)}</strong>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-sec-title">💳 Taxas da Maquininha</div>
+    <div style="margin-bottom:10px;font-size:11px;color:var(--text3)">Usadas automaticamente na calculadora. Configure conforme sua operadora.</div>
+    <table class="maq-table">
+      <thead><tr><th>Modalidade</th><th>Taxa (%)</th><th>Em R$ 100,00 você recebe</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600">💸 Débito</td><td><input id="maq-deb" type="number" step="0.01" value="${maq.debito}"></td><td style="color:var(--amber)">R$ ${(100*(1-maq.debito/100)).toFixed(2)}</td></tr>
+        <tr><td style="font-weight:600">💳 Crédito 1x</td><td><input id="maq-c1" type="number" step="0.01" value="${maq.credito1}"></td><td style="color:var(--amber)">R$ ${(100*(1-maq.credito1/100)).toFixed(2)}</td></tr>
+        ${[2,3,4,5,6,7,8,9,10,11,12].map(p=>`<tr><td>Crédito ${p}x</td><td><input id="maq-c${p}" type="number" step="0.01" value="${maq['credito'+p]||0}"></td><td style="color:var(--text2)">R$ ${(100*(1-(maq['credito'+p]||0)/100)/p).toFixed(2)}/parc.</td></tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="config-section">
+    <div class="config-sec-title">🧾 Impostos e Operacional</div>
+    <div class="fg">
+      <div class="fl"><label>Imposto MEI (%)</label><input id="cf-imei" type="number" step="0.1" value="${S.cfg.impostoMEI}"></div>
+      <div class="fl"><label>Taxa nota fiscal (%)</label><input id="cf-inf" type="number" step="0.1" value="${S.cfg.impostoNF}"></div>
+      <div class="fl"><label>Deslocamento base (R$)</label><input id="cf-desb" type="number" value="${S.cfg.deslBase}"></div>
+      <div class="fl"><label>Km extra (R$/km)</label><input id="cf-deskm" type="number" step="0.5" value="${S.cfg.deslKmExtra}"></div>
+      <div class="fl"><label>Taxa urgência padrão (%)</label><input id="cf-urg" type="number" value="${S.cfg.urgencial}"></div>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-sec-title">☁️ Sincronização na Nuvem (JSONBin.io)</div>
+    <div class="alert-box info" style="margin-bottom:14px">
+      <div>
+        <strong>Como configurar (grátis, sem cartão):</strong><br>
+        1. Acesse <strong>jsonbin.io</strong> e crie uma conta gratuita<br>
+        2. Vá em <strong>API Keys</strong> e copie sua <strong>Master Key</strong><br>
+        3. Clique em <strong>+ New Bin</strong>, crie um bin vazio com <code>{}</code><br>
+        4. Copie o <strong>Bin ID</strong> (aparece na URL: /v3/b/<strong>ID</strong>)<br>
+        5. Cole ambos abaixo e clique em Salvar + Sincronizar
+      </div>
+    </div>
+    <div class="fg">
+      <div class="fl"><label>Master Key (X-Master-Key)</label><input id="cf-jkey" type="password" value="${S.cfg.jsonbinKey}" placeholder="$2b$10$..."></div>
+      <div class="fl"><label>Bin ID</label><input id="cf-jbin" value="${S.cfg.jsonbinBin}" placeholder="64abc123def456..."></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" onclick="salvarConfig();syncCloud()">💾 Salvar e Sincronizar agora</button>
+      <button class="btn ghost" onclick="loadCloud()">📥 Carregar da nuvem</button>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text3)">
+      Alternativa local: use os botões <strong>Exportar / Importar JSON</strong> na barra inferior para backup manual em qualquer dispositivo.
+    </div>
+  </div>`;
+}
+
+// ===================== MODALS =====================
+function openM(html){document.getElementById('mroot').innerHTML=`<div class="modal-ov" onclick="if(event.target.classList.contains('modal-ov'))closeM()"><div class="modal">${html}</div></div>`;}
+function closeM(){document.getElementById('mroot').innerHTML='';}
+
+// VER ORÇAMENTO (DETALHES)
+function mVerOrc(id){
+  const o=S.orc.find(x=>x.id===id);if(!o)return;
+  const statusColor={Aprovado:'gr',Aguardando:'am',Recusado:'re'}[o.status]||'bl';
+  openM(`
+  <div class="modal-title">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:monospace;font-size:13px;color:var(--text3)">${o.id}</span>
+      <span class="badge ${statusColor}">${o.status}</span>
+    </div>
+    <button class="xbtn" onclick="closeM()">✕</button>
+  </div>
+  <div style="background:var(--bg4);border-radius:8px;padding:14px;margin-bottom:16px">
+    <div style="font-size:22px;font-weight:700;color:var(--blue3)">${fmtR(o.valor)}</div>
+    <div style="font-size:12px;color:var(--green);margin-top:3px">Lucro estimado: ${fmtR(o.lucro)}</div>
+  </div>
+  <div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Cliente</div><div class="orc-detail-val" style="font-weight:600">${o.cliente}</div></div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Telefone</div><div class="orc-detail-val">${o.tel}</div></div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Endereço</div><div class="orc-detail-val">${o.end}</div></div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Serviço</div><div class="orc-detail-val">${o.tipo}</div></div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Data</div><div class="orc-detail-val">${o.data}</div></div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Tempo gasto</div><div class="orc-detail-val">${o.tempo}</div></div>
+    <div class="orc-detail-row"><div class="orc-detail-lbl">Observações</div><div class="orc-detail-val" style="white-space:pre-wrap;line-height:1.6;color:${o.obs?'var(--text)':'var(--text3)'}">${o.obs||'Nenhuma observação registrada.'}</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+    <button class="btn ghost" onclick="closeM();mEditOrc('${o.id}')">✏️ Editar</button>
+    <button class="btn ghost" onclick="closeM();dupOrc('${o.id}')">📄 Duplicar</button>
+    <button class="btn" onclick="closeM()">Fechar</button>
+  </div>`);
+}
+
+function mNovoServ(){openM(`<div class="modal-title">Novo Serviço <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Nome</label><input id="sn" placeholder="Ex: Formatação completa"></div>
+    <div class="fl"><label>Categoria</label><select id="scat">${['Elétrica','Informática','Redes','CFTV','Notebook','Gamer','TV e Monitores','Serviços Gerais','Automação'].map(c=>`<option>${c}</option>`).join('')}</select></div>
+    <div class="fl"><label>Subcategoria</label><input id="ssub"></div>
+    <div class="fl"><label>Tipo</label><select id="stipo"><option>unitario</option><option>metro</option><option>ponto</option><option>diaria</option><option>fechado</option></select></div>
+    <div class="fl"><label>Valor mínimo (R$)</label><input id="smin" type="number"></div>
+    <div class="fl"><label>Valor médio (R$)</label><input id="smed" type="number"></div>
+    <div class="fl"><label>Valor máximo (R$)</label><input id="smax" type="number"></div>
+    <div class="fl"><label>Tempo</label><input id="stmp" placeholder="Ex: 2h"></div>
+    <div class="fl"><label>Dificuldade</label><select id="sdif"><option>Fácil</option><option>Médio</option><option>Difícil</option></select></div>
+    <div class="fl"><label>Custo material (R$)</label><input id="smat" type="number"></div>
+    <div class="fl"><label>Mão de obra (R$)</label><input id="smdo" type="number"></div>
+    <div class="fl"><label>Margem (%)</label><input id="smarg" type="number" value="30"></div>
+    <div class="fl"><label>Garantia</label><input id="sgar" placeholder="Ex: 30 dias"></div>
+    <div class="fl"><label>Inclui material?</label><select id="sinc"><option value="false">Não</option><option value="true">Sim</option></select></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarNovoServ()">Salvar</button></div>`);
+}
+function salvarNovoServ(){S.services.push({id:Math.max(...S.services.map(s=>s.id),0)+1,nome:document.getElementById('sn').value||'Serviço',cat:document.getElementById('scat').value,sub:document.getElementById('ssub').value,tipo:document.getElementById('stipo').value,minVal:+document.getElementById('smin').value||0,medVal:+document.getElementById('smed').value||0,maxVal:+document.getElementById('smax').value||0,tempo:document.getElementById('stmp').value,dific:document.getElementById('sdif').value,material:+document.getElementById('smat').value||0,mdo:+document.getElementById('smdo').value||0,margem:+document.getElementById('smarg').value||30,garantia:document.getElementById('sgar').value,inclMat:document.getElementById('sinc').value==='true'});closeM();render();}
+function mEditServ(id){const s=S.services.find(x=>x.id===id);if(!s)return;openM(`<div class="modal-title">Editar: ${s.nome} <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Nome</label><input id="en" value="${s.nome}"></div>
+    <div class="fl"><label>Valor mínimo</label><input id="emin" type="number" value="${s.minVal}"></div>
+    <div class="fl"><label>Valor médio</label><input id="emed" type="number" value="${s.medVal}"></div>
+    <div class="fl"><label>Valor máximo</label><input id="emax" type="number" value="${s.maxVal}"></div>
+    <div class="fl"><label>Custo material</label><input id="emat" type="number" value="${s.material}"></div>
+    <div class="fl"><label>Mão de obra</label><input id="emdo" type="number" value="${s.mdo}"></div>
+    <div class="fl"><label>Margem (%)</label><input id="emarg" type="number" value="${s.margem}"></div>
+    <div class="fl"><label>Tempo</label><input id="etmp" value="${s.tempo}"></div>
+    <div class="fl"><label>Garantia</label><input id="egar" value="${s.garantia}"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarEditServ(${id})">Salvar</button></div>`);}
+function salvarEditServ(id){const s=S.services.find(x=>x.id===id);if(!s)return;s.nome=document.getElementById('en').value;s.minVal=+document.getElementById('emin').value;s.medVal=+document.getElementById('emed').value;s.maxVal=+document.getElementById('emax').value;s.material=+document.getElementById('emat').value;s.mdo=+document.getElementById('emdo').value;s.margem=+document.getElementById('emarg').value;s.tempo=document.getElementById('etmp').value;s.garantia=document.getElementById('egar').value;closeM();render();}
+function delServ(id){if(confirm('Excluir serviço?')){S.services=S.services.filter(s=>s.id!==id);render();}}
+function addToCalc(id){S.calcItems.push({id,qty:1});pg('calc');}
+function addCI(){const s=document.getElementById('csel'),q=+document.getElementById('cqty').value||1;if(!s.value)return;const id=+s.value,ex=S.calcItems.find(i=>i.id===id);if(ex)ex.qty+=q;else S.calcItems.push({id,qty:q});render();}
+
+function mNovoOrc(){openM(`<div class="modal-title">Novo Orçamento <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Cliente</label><input id="nc"></div>
+    <div class="fl"><label>Telefone</label><input id="nt" placeholder="(11) 99999-9999"></div>
+    <div class="fl"><label>Endereço</label><input id="ne" placeholder="Cidade, UF"></div>
+    <div class="fl"><label>Valor (R$)</label><input id="nv" type="number"></div>
+    <div class="fl"><label>Lucro (R$)</label><input id="nl" type="number"></div>
+    <div class="fl"><label>Status</label><select id="ns"><option>Aguardando</option><option>Aprovado</option><option>Recusado</option></select></div>
+    <div class="fl"><label>Data</label><input id="nd" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="fl"><label>Tempo gasto</label><input id="ntmp" placeholder="Ex: 2h"></div>
+  </div>
+  <div class="fl" style="margin-top:10px"><label>Descrição do serviço</label><input id="ntipo" placeholder="Resumo dos serviços"></div>
+  <div class="fl" style="margin-top:8px"><label>Observações</label><textarea id="nobs" placeholder="Detalhes importantes, materiais, acesso..."></textarea></div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarNovoOrc()">Salvar</button></div>`);
+}
+function salvarNovoOrc(){S.orc.push({id:`ORC-${String(S.nextOrc++).padStart(3,'0')}`,cliente:document.getElementById('nc').value||'Cliente',tel:document.getElementById('nt').value||'—',end:document.getElementById('ne').value||'—',tipo:document.getElementById('ntipo').value||'Serviço técnico',data:document.getElementById('nd').value,valor:+document.getElementById('nv').value||0,status:document.getElementById('ns').value,lucro:+document.getElementById('nl').value||0,tempo:document.getElementById('ntmp').value||'—',obs:document.getElementById('nobs').value||''});closeM();render();}
+
+function mEditOrc(id){const o=S.orc.find(x=>x.id===id);if(!o)return;openM(`<div class="modal-title">Editar ${o.id} <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Cliente</label><input id="ec" value="${o.cliente}"></div>
+    <div class="fl"><label>Telefone</label><input id="et" value="${o.tel}"></div>
+    <div class="fl"><label>Valor</label><input id="ev" type="number" value="${o.valor}"></div>
+    <div class="fl"><label>Lucro</label><input id="el" type="number" value="${o.lucro}"></div>
+    <div class="fl"><label>Status</label><select id="es"><option ${o.status==='Aguardando'?'selected':''}>Aguardando</option><option ${o.status==='Aprovado'?'selected':''}>Aprovado</option><option ${o.status==='Recusado'?'selected':''}>Recusado</option></select></div>
+    <div class="fl"><label>Tempo</label><input id="etmp" value="${o.tempo}"></div>
+  </div>
+  <div class="fl" style="margin-top:8px"><label>Observações</label><textarea id="eobs">${o.obs||''}</textarea></div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarEditOrc('${id}')">Salvar</button></div>`);}
+function salvarEditOrc(id){const o=S.orc.find(x=>x.id===id);if(!o)return;o.cliente=document.getElementById('ec').value;o.tel=document.getElementById('et').value;o.valor=+document.getElementById('ev').value;o.lucro=+document.getElementById('el').value;o.status=document.getElementById('es').value;o.tempo=document.getElementById('etmp').value;o.obs=document.getElementById('eobs').value;closeM();render();}
+function dupOrc(id){const o=S.orc.find(x=>x.id===id);if(!o)return;S.orc.push({...o,id:`ORC-${String(S.nextOrc++).padStart(3,'0')}`,status:'Aguardando',data:new Date().toISOString().slice(0,10)});render();}
+function delOrc(id){if(confirm('Excluir orçamento?')){S.orc=S.orc.filter(o=>o.id!==id);render();}}
+
+function mSalvarOrc(total,lucro){openM(`<div class="modal-title">💾 Salvar Orçamento <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div style="background:var(--bg4);border-radius:8px;padding:12px;margin-bottom:14px"><div style="font-size:10px;color:var(--text3)">Total calculado</div><div style="font-size:24px;font-weight:700;color:var(--blue3)">${fmtR(+total)}</div><div style="font-size:11px;color:var(--green)">Lucro: ${fmtR(+lucro)}</div></div>
+  <div class="fg">
+    <div class="fl"><label>Cliente</label><input id="oc"></div>
+    <div class="fl"><label>Telefone</label><input id="ot" placeholder="(11) 99999-9999"></div>
+    <div class="fl"><label>Endereço</label><input id="oe" placeholder="Cidade, UF"></div>
+    <div class="fl"><label>Status</label><select id="os"><option>Aguardando</option><option>Aprovado</option></select></div>
+    <div class="fl"><label>Tempo gasto</label><input id="otmp"></div>
+    <div class="fl"><label>Data</label><input id="od" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+  </div>
+  <div class="fl" style="margin-top:8px"><label>Serviços realizados</label><input id="otipo" placeholder="Resumo dos serviços"></div>
+  <div class="fl" style="margin-top:8px"><label>Observações</label><textarea id="oobs" placeholder="Detalhes, materiais usados, próximos passos..."></textarea></div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="confirmarSalvarOrc(${total},${lucro})">✅ Salvar</button></div>`);}
+function confirmarSalvarOrc(total,lucro){S.orc.push({id:`ORC-${String(S.nextOrc++).padStart(3,'0')}`,cliente:document.getElementById('oc').value||'Cliente',tel:document.getElementById('ot').value||'—',end:document.getElementById('oe').value||'—',tipo:document.getElementById('otipo').value||'Serviço técnico',data:document.getElementById('od').value,valor:+total,status:document.getElementById('os').value,lucro:+lucro,tempo:document.getElementById('otmp').value||'—',obs:document.getElementById('oobs').value||''});S.calcItems=[];closeM();pg('orc');}
+
+function mNovoCli(){openM(`<div class="modal-title">Novo Cliente <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Nome</label><input id="cn"></div>
+    <div class="fl"><label>Telefone</label><input id="ct" placeholder="(11) 99999-9999"></div>
+    <div class="fl"><label>E-mail</label><input id="ce"></div>
+    <div class="fl"><label>Endereço</label><input id="cend" placeholder="Cidade, UF"></div>
+    <div class="fl"><label>Tipo</label><select id="ctipo"><option>Novo</option><option>Recorrente</option><option>VIP</option><option>Inadimplente</option></select></div>
+    <div class="fl"><label>Obs</label><input id="cobs"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarNovoCli()">Salvar</button></div>`);
+}
+function salvarNovoCli(){S.clientes.push({id:S.nextCli++,nome:document.getElementById('cn').value||'Cliente',tel:document.getElementById('ct').value||'—',email:document.getElementById('ce').value||'',end:document.getElementById('cend').value||'—',tipo:document.getElementById('ctipo').value,servicos:0,gasto:0,obs:document.getElementById('cobs').value||''});closeM();render();}
+function mEditCli(id){const c=S.clientes.find(x=>x.id===id);if(!c)return;openM(`<div class="modal-title">Editar Cliente <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Nome</label><input id="en" value="${c.nome}"></div>
+    <div class="fl"><label>Telefone</label><input id="et" value="${c.tel}"></div>
+    <div class="fl"><label>E-mail</label><input id="ee" value="${c.email}"></div>
+    <div class="fl"><label>Tipo</label><select id="etipo"><option ${c.tipo==='Novo'?'selected':''}>Novo</option><option ${c.tipo==='Recorrente'?'selected':''}>Recorrente</option><option ${c.tipo==='VIP'?'selected':''}>VIP</option><option ${c.tipo==='Inadimplente'?'selected':''}>Inadimplente</option></select></div>
+    <div class="fl"><label>Gasto total (R$)</label><input id="eg" type="number" value="${c.gasto}"></div>
+    <div class="fl"><label>Nº serviços</label><input id="es2" type="number" value="${c.servicos}"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarEditCli(${id})">Salvar</button></div>`);
+}
+function salvarEditCli(id){const c=S.clientes.find(x=>x.id===id);if(!c)return;c.nome=document.getElementById('en').value;c.tel=document.getElementById('et').value;c.email=document.getElementById('ee').value;c.tipo=document.getElementById('etipo').value;c.gasto=+document.getElementById('eg').value;c.servicos=+document.getElementById('es2').value;closeM();render();}
+function delCli(id){if(confirm('Excluir cliente?')){S.clientes=S.clientes.filter(c=>c.id!==id);render();}}
+
+function mNovoEst(){openM(`<div class="modal-title">Novo Item de Estoque <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Nome</label><input id="en"></div>
+    <div class="fl"><label>Categoria</label><input id="ec" placeholder="Ex: Hardware, Cabos..."></div>
+    <div class="fl"><label>Quantidade</label><input id="eq" type="number" value="1"></div>
+    <div class="fl"><label>Qtd mínima</label><input id="eqm" type="number" value="2"></div>
+    <div class="fl"><label>Custo unit. (R$)</label><input id="ecu" type="number"></div>
+    <div class="fl"><label>Fornecedor</label><input id="ef"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarNovoEst()">Salvar</button></div>`);
+}
+function salvarNovoEst(){S.estoque.push({id:S.nextEst++,nome:document.getElementById('en').value||'Item',cat:document.getElementById('ec').value||'Geral',qtd:+document.getElementById('eq').value||0,qtdMin:+document.getElementById('eqm').value||1,custo:+document.getElementById('ecu').value||0,fornecedor:document.getElementById('ef').value||'—',obs:''});closeM();render();}
+function mEntrada(id){const e=S.estoque.find(x=>x.id===id);if(!e)return;openM(`<div class="modal-title">+ Entrada: ${e.nome} <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg"><div class="fl"><label>Quantidade</label><input id="mq" type="number" value="1"></div><div class="fl"><label>Obs</label><input id="mob" value="Compra"></div></div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn success" onclick="confEntrada(${id})">+ Confirmar</button></div>`);
+}
+function confEntrada(id){const e=S.estoque.find(x=>x.id===id);const q=+document.getElementById('mq').value||1;e.qtd+=q;S.movEstoque.unshift({data:new Date().toISOString().slice(0,10),item:e.nome,tipo:'Entrada',qtd:q,obs:document.getElementById('mob').value});closeM();render();}
+function mSaida(id){const e=S.estoque.find(x=>x.id===id);if(!e)return;openM(`<div class="modal-title">- Saída: ${e.nome} (${e.qtd} em estoque) <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg"><div class="fl"><label>Quantidade</label><input id="mq" type="number" value="1" max="${e.qtd}"></div><div class="fl"><label>Motivo</label><input id="mob" placeholder="Ex: ORC-006"></div></div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn danger" onclick="confSaida(${id})">- Confirmar</button></div>`);
+}
+function confSaida(id){const e=S.estoque.find(x=>x.id===id);const q=Math.min(+document.getElementById('mq').value||1,e.qtd);e.qtd-=q;S.movEstoque.unshift({data:new Date().toISOString().slice(0,10),item:e.nome,tipo:'Saída',qtd:q,obs:document.getElementById('mob').value});closeM();render();}
+function mMovEst(){openM(`<div class="modal-title">📋 Movimentações <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="tw" style="margin-bottom:0"><table><thead><tr><th>Data</th><th>Item</th><th>Tipo</th><th>Qtd</th><th>Obs</th></tr></thead>
+  <tbody>${S.movEstoque.map(m=>`<tr><td style="font-size:11px">${m.data}</td><td style="font-weight:600">${m.item}</td><td><span class="badge ${m.tipo==='Entrada'?'gr':'re'}">${m.tipo}</span></td><td style="font-weight:700;color:${m.tipo==='Entrada'?'var(--green)':'var(--red)'}">${m.tipo==='Entrada'?'+':'-'}${m.qtd}</td><td style="font-size:11px;color:var(--text2)">${m.obs}</td></tr>`).join('')}</tbody></table></div>`);}
+
+function mNovoAg(){openM(`<div class="modal-title">Novo Compromisso <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Título</label><input id="at" placeholder="Ex: João - Formatação"></div>
+    <div class="fl"><label>Dia do mês</label><input id="ad" type="number" min="1" max="31" value="11"></div>
+    <div class="fl"><label>Horário</label><input id="ah" type="time" value="09:00"></div>
+    <div class="fl"><label>Tipo</label><select id="atipo"><option>Serviço</option><option>Instalação</option><option>Orçamento</option><option>Comercial</option><option>Pessoal</option></select></div>
+    <div class="fl"><label>Status</label><select id="ast"><option>Confirmado</option><option>Aguardando</option></select></div>
+    <div class="fl"><label>Obs</label><input id="ao"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn" onclick="salvarNovoAg()">Salvar</button></div>`);
+}
+function salvarNovoAg(){S.agenda.push({id:S.nextAg++,dia:+document.getElementById('ad').value||11,titulo:document.getElementById('at').value||'Compromisso',hora:document.getElementById('ah').value||'09:00',status:document.getElementById('ast').value,tipo:document.getElementById('atipo').value,obs:document.getElementById('ao').value||''});closeM();render();}
+function delAg(id){if(confirm('Excluir este compromisso da agenda?')){S.agenda=S.agenda.filter(a=>a.id!==id);render();}}
+function toggleAgStatus(id){const a=S.agenda.find(x=>x.id===id);if(!a)return;a.status=a.status==='Confirmado'?'Aguardando':'Confirmado';render();}
+
+function mNovoGasto(){openM(`<div class="modal-title">💸 Novo Gasto <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Descrição</label><input id="gd" placeholder="Ex: Combustível"></div>
+    <div class="fl"><label>Valor (R$)</label><input id="gv" type="number"></div>
+    <div class="fl"><label>Data</label><input id="gdt" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end"><button class="btn ghost" onclick="closeM()">Cancelar</button><button class="btn danger" onclick="salvarGasto()">Registrar</button></div>`);
+}
+function salvarGasto(){const v=+document.getElementById('gv').value||0;S.gastos.push({desc:document.getElementById('gd').value||'Gasto',valor:v,data:document.getElementById('gdt').value});closeM();render();}
+
+function salvarConfig(){
+  S.cfg.empresa=document.getElementById('cf-emp').value||S.cfg.empresa;
+  S.cfg.sub=document.getElementById('cf-sub').value||S.cfg.sub;
+  S.cfg.cnpj=document.getElementById('cf-cnpj').value;
+  S.cfg.tel=document.getElementById('cf-tel').value;
+  S.cfg.cidade=document.getElementById('cf-cid').value;
+  S.cfg.logoText=document.getElementById('cf-logo').value||S.cfg.logoText;
+  S.cfg.metaMensal=+document.getElementById('cf-mmen').value||S.cfg.metaMensal;
+  S.cfg.metaSemanal=+document.getElementById('cf-msem').value||S.cfg.metaSemanal;
+  S.cfg.metaAnual=+document.getElementById('cf-manu').value||S.cfg.metaAnual;
+  S.cfg.impostoMEI=+document.getElementById('cf-imei').value||0;
+  S.cfg.impostoNF=+document.getElementById('cf-inf').value||0;
+  S.cfg.deslBase=+document.getElementById('cf-desb').value||S.cfg.deslBase;
+  S.cfg.deslKmExtra=+document.getElementById('cf-deskm').value||S.cfg.deslKmExtra;
+  S.cfg.urgencial=+document.getElementById('cf-urg').value||S.cfg.urgencial;
+  S.cfg.jsonbinKey=document.getElementById('cf-jkey').value||'';
+  S.cfg.jsonbinBin=document.getElementById('cf-jbin').value||'';
+  const maq=S.cfg.maquininha;
+  maq.debito=+document.getElementById('maq-deb').value||maq.debito;
+  maq.credito1=+document.getElementById('maq-c1').value||maq.credito1;
+  for(let p=2;p<=12;p++){const el=document.getElementById('maq-c'+p);if(el)maq['credito'+p]=+el.value||maq['credito'+p]||0;}
+  const tl=document.getElementById('top-logo');
+  if(tl){tl.childNodes[0].textContent=S.cfg.empresa+' ';document.getElementById('top-sub').textContent='· '+S.cfg.sub;}
+  alert('✅ Configurações salvas!');
+  render();
+}
+
+render();
+</script>
