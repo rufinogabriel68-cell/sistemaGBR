@@ -5,135 +5,123 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GBR Soluções — Sistema de Gestão</title>
 
-<!-- Firebase SDK -->
+<!-- Firebase Realtime Database SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ============================================================
-// COLE AQUI AS SUAS CREDENCIAIS DO FIREBASE
-// (Console Firebase → Configurações do projeto → Seus apps)
+// CREDENCIAIS DO FIREBASE — gbrsistema
 // ============================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyCUc8zBg-ci8BwAUJB5pbqnRhzqhQIH26E",
-  authDomain: "gbrsistema.firebaseapp.com",
-  projectId: "gbrsistema",
-  storageBucket: "gbrsistema.appspot.com",
+  apiKey:            "AIzaSyCUc8zBg-ci8BwAUJB5pbqnRhzqhQIH26E",
+  authDomain:        "gbrsistema.firebaseapp.com",
+  projectId:         "gbrsistema",
+  storageBucket:     "gbrsistema.appspot.com",
   messagingSenderId: "1045038353569",
-  appId: "1:1045038353569:web:bfee704688da2a20c2f4e0"
+  appId:             "1:1045038353569:web:bfee704688da2a20c2f4e0",
+  databaseURL:       "https://sistemagbr-f6b4e-default-rtdb.firebaseio.com"
 };
 // ============================================================
 
-let app, db, unsubscribe;
-let firebaseOK = false;
+let app, db, dbRef;
 let saveTimeout = null;
+let primeiroCarregamento = true;
 
 function initFirebase() {
   try {
     app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    // Considera configurado se apiKey não é o placeholder
-    firebaseOK = firebaseConfig.apiKey && firebaseConfig.apiKey !== "COLE_SUA_API_KEY";
-    if (firebaseOK) {
-      setSyncStatus('loading', '🔄 Conectando ao Firebase...');
-      startRealtimeSync();
-    } else {
-      setSyncStatus('warn', '⚠️ Firebase não configurado — salvando localmente');
-    }
+    db  = getDatabase(app);
+    dbRef = ref(db, 'gbr/dados');
+    setSyncStatus('loading', '🔄 Conectando ao Realtime Database...');
+    startRealtimeSync();
   } catch(e) {
     setSyncStatus('err', '❌ Erro ao iniciar Firebase: ' + e.message);
     console.error('Firebase init error:', e);
   }
 }
 
-async function startRealtimeSync() {
-  setSyncStatus('loading', '🔄 Carregando dados do Firebase...');
-  try {
-    // Primeiro carrega dados existentes
-    const snap = await getDoc(doc(db, 'gbr', 'dados'));
-    if (snap.exists()) {
-      mergeData(snap.data());
-      render();
-      setSyncStatus('ok', '🟢 Dados carregados — ouvindo em tempo real');
-    } else {
-      // Primeiro acesso: salva os dados iniciais
-      setSyncStatus('loading', '🔄 Primeiro acesso — salvando dados iniciais...');
-      await window.saveToFirebase();
-    }
-    // Escuta mudanças em tempo real
-    unsubscribe = onSnapshot(doc(db, 'gbr', 'dados'), (snap) => {
-      if (snap.exists() && !window._saving) {
-        mergeData(snap.data());
+function startRealtimeSync() {
+  // onValue dispara imediatamente com valor atual e depois a cada mudança
+  onValue(dbRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      // Só aplica dados externos se NÃO somos nós que acabamos de salvar
+      if (!window._saving) {
+        mergeData(data);
         render();
-        setSyncStatus('ok', '🟢 Sincronizado — ' + new Date().toLocaleTimeString('pt-BR'));
       }
-    }, (err) => {
-      // Erro no listener em tempo real
-      if (err.code === 'permission-denied') {
-        setSyncStatus('err', '❌ Permissão negada — ajuste as Regras do Firestore (veja instruções abaixo)');
-      } else {
-        setSyncStatus('err', '❌ Erro listener: ' + err.message);
+      if (primeiroCarregamento) {
+        primeiroCarregamento = false;
+        setSyncStatus('ok', '🟢 Conectado — dados carregados do Firebase');
+      } else if (!window._saving) {
+        setSyncStatus('ok', '🟢 Atualizado em tempo real — ' + new Date().toLocaleTimeString('pt-BR'));
       }
-      console.error('Firestore listener error:', err);
-    });
-  } catch(e) {
-    console.error('Firestore error:', e);
-    if (e.code === 'permission-denied') {
-      setSyncStatus('err', '🔒 PERMISSÃO NEGADA — Vá no Firebase Console → Firestore → Regras e altere para: allow read, write: if true;');
-    } else if (e.code === 'unavailable') {
-      setSyncStatus('err', '📡 Sem conexão com Firebase — usando dados locais');
     } else {
-      setSyncStatus('err', '❌ Erro Firebase: [' + (e.code||'?') + '] ' + e.message);
+      // Banco vazio: primeiro acesso, sobe os dados iniciais
+      primeiroCarregamento = false;
+      setSyncStatus('loading', '🔄 Primeiro acesso — enviando dados iniciais...');
+      window.saveToFirebase();
     }
-    // Fallback para localStorage
-    saveToLocal();
-  }
+  }, (err) => {
+    console.error('Realtime DB error:', err);
+    if (err.code === 'PERMISSION_DENIED') {
+      setSyncStatus('err', '🔒 Permissão negada — verifique as Regras do Realtime Database');
+    } else {
+      setSyncStatus('err', '❌ Erro de conexão: ' + err.message);
+    }
+    // Fallback: mantém localStorage
+    setSyncStatus('warn', '⚠️ Usando dados locais — Firebase indisponível');
+  });
 }
 
 function mergeData(data) {
-  if (data.services)    S.services    = data.services;
-  if (data.orc)         S.orc         = data.orc;
-  if (data.clientes)    S.clientes    = data.clientes;
-  if (data.estoque)     S.estoque     = data.estoque;
-  if (data.movEstoque)  S.movEstoque  = data.movEstoque;
-  if (data.agenda)      S.agenda      = data.agenda;
-  if (data.gastos)      S.gastos      = data.gastos;
-  if (data.cfg)         Object.assign(S.cfg, data.cfg);
-  if (data.nextOrc)     S.nextOrc     = data.nextOrc;
-  if (data.nextEst)     S.nextEst     = data.nextEst;
-  if (data.nextCli)     S.nextCli     = data.nextCli;
-  if (data.nextAg)      S.nextAg      = data.nextAg;
+  if (data.services)   S.services   = data.services;
+  if (data.orc)        S.orc        = data.orc;
+  if (data.clientes)   S.clientes   = data.clientes;
+  if (data.estoque)    S.estoque    = data.estoque;
+  if (data.movEstoque) S.movEstoque = data.movEstoque;
+  if (data.agenda)     S.agenda     = data.agenda;
+  if (data.gastos)     S.gastos     = data.gastos;
+  if (data.cfg)        Object.assign(S.cfg, data.cfg);
+  if (data.nextOrc)    S.nextOrc    = data.nextOrc;
+  if (data.nextEst)    S.nextEst    = data.nextEst;
+  if (data.nextCli)    S.nextCli    = data.nextCli;
+  if (data.nextAg)     S.nextAg     = data.nextAg;
 }
 
 window.saveToFirebase = async function() {
-  if (!firebaseOK) {
-    saveToLocal();
-    setSyncStatus('ok', '💾 Salvo localmente — ' + new Date().toLocaleTimeString('pt-BR'));
-    return;
-  }
   window._saving = true;
-  setSyncStatus('loading', '💾 Salvando...');
+  setSyncStatus('loading', '💾 Salvando no Firebase...');
   const payload = {
-    services: S.services, orc: S.orc, clientes: S.clientes,
-    estoque: S.estoque, movEstoque: S.movEstoque, agenda: S.agenda,
-    gastos: S.gastos, cfg: S.cfg,
-    nextOrc: S.nextOrc, nextEst: S.nextEst, nextCli: S.nextCli, nextAg: S.nextAg,
-    updatedAt: new Date().toISOString()
+    services:   S.services,
+    orc:        S.orc,
+    clientes:   S.clientes,
+    estoque:    S.estoque,
+    movEstoque: S.movEstoque,
+    agenda:     S.agenda,
+    gastos:     S.gastos,
+    cfg:        S.cfg,
+    nextOrc:    S.nextOrc,
+    nextEst:    S.nextEst,
+    nextCli:    S.nextCli,
+    nextAg:     S.nextAg,
+    updatedAt:  new Date().toISOString()
   };
   try {
-    await setDoc(doc(db, 'gbr', 'dados'), payload);
-    saveToLocal(); // sempre salva local também como backup
+    await set(dbRef, payload);
+    saveToLocal(); // backup local paralelo
     setSyncStatus('ok', '🟢 Salvo no Firebase — ' + new Date().toLocaleTimeString('pt-BR'));
   } catch(e) {
     console.error('Save error:', e);
     saveToLocal();
-    if (e.code === 'permission-denied') {
-      setSyncStatus('err', '🔒 PERMISSÃO NEGADA — Ajuste as Regras do Firestore (Console Firebase → Firestore → Regras → allow read, write: if true;)');
+    if (e.code === 'PERMISSION_DENIED') {
+      setSyncStatus('err', '🔒 Permissão negada — verifique as Regras do Realtime Database');
     } else {
-      setSyncStatus('err', '❌ Erro ao salvar: ' + e.message + ' — backup salvo localmente');
+      setSyncStatus('err', '❌ Erro ao salvar: ' + e.message + ' (backup local feito)');
     }
   }
-  setTimeout(() => { window._saving = false; }, 500);
+  setTimeout(() => { window._saving = false; }, 800);
 };
 
 // Debounce — salva 1,5s após última alteração
@@ -705,20 +693,18 @@ function rConfig() {
     <div class="fl"><label>Urgência padrão (%)</label><input id="cf-urg" type="number" value="${S.cfg.urgencial}"></div>
   </div></div>
 
-  <div class="config-section"><div class="config-sec-title">🔥 Firebase — Configuração</div>
-  <div class="alert-box ok" style="margin-bottom:10px">✅ Firebase configurado: <strong>gbrsistema</strong> — verifique a barra inferior para status da conexão.</div>
-  <div class="alert-box warn" style="margin-bottom:12px">
-    <div><strong>⚠️ Se aparecer erro de PERMISSÃO NEGADA, faça isso:</strong><br><br>
-    1. Acesse <strong>console.firebase.google.com</strong><br>
-    2. Selecione o projeto <strong>gbrsistema</strong><br>
-    3. Menu lateral → <strong>Firestore Database</strong> → aba <strong>Regras</strong><br>
-    4. Substitua todo o conteúdo por:<br>
-    <code style="display:block;background:var(--bg5);padding:8px;border-radius:5px;margin-top:6px;font-size:11px">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code><br>
-    5. Clique em <strong>Publicar</strong> — aguarde 30 segundos e tente novamente.
+  <div class="config-section"><div class="config-sec-title">🔥 Firebase Realtime Database</div>
+  <div class="alert-box ok" style="margin-bottom:10px">✅ Conectado ao projeto: <strong>gbrsistema</strong> — veja status na barra inferior.</div>
+  <div class="alert-box info" style="margin-bottom:10px">
+    <div>
+      <strong>Suas regras estão corretas:</strong><br>
+      <code style="display:block;background:var(--bg5);padding:8px;border-radius:5px;margin-top:6px;font-size:11px">{ "rules": { ".read": true, ".write": true } }</code><br>
+      Se ainda aparecer erro, confirme que o <strong>databaseURL</strong> está certo.<br>
+      Vá em: Console Firebase → Realtime Database → copie a URL (ex: <code>https://gbrsistema-default-rtdb.firebaseio.com</code>)
     </div>
   </div>
-  <div class="alert-box info">
-    <div>💡 <strong>Dica de segurança:</strong> O modo <code>if true</code> deixa o banco aberto. Para uso pessoal está ótimo. No futuro, quando quiser restringir, use <code>if request.auth != null</code> com Firebase Auth.</div>
+  <div class="alert-box warn">
+    <div>💡 <strong>Backup duplo ativo:</strong> cada salvamento vai para o Firebase <strong>e</strong> para o localStorage do navegador. Se o Firebase falhar, os dados locais são preservados e você pode exportar via JSON.</div>
   </div>
   </div>`;
 }
