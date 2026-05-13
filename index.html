@@ -15,12 +15,12 @@ import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstat
 // (Console Firebase → Configurações do projeto → Seus apps)
 // ============================================================
 const firebaseConfig = {
-  apiKey: "COLE_SUA_API_KEY",
-  authDomain: "COLE_SEU_PROJECT_ID.firebaseapp.com",
-  projectId: "COLE_SEU_PROJECT_ID",
-  storageBucket: "COLE_SEU_PROJECT_ID.appspot.com",
-  messagingSenderId: "COLE_SEU_MESSAGING_SENDER_ID",
-  appId: "COLE_SEU_APP_ID"
+  apiKey: "AIzaSyCUc8zBg-ci8BwAUJB5pbqnRhzqhQIH26E",
+  authDomain: "gbrsistema.firebaseapp.com",
+  projectId: "gbrsistema",
+  storageBucket: "gbrsistema.appspot.com",
+  messagingSenderId: "1045038353569",
+  appId: "1:1045038353569:web:bfee704688da2a20c2f4e0"
 };
 // ============================================================
 
@@ -32,38 +32,61 @@ function initFirebase() {
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
-    firebaseOK = firebaseConfig.apiKey !== "COLE_SUA_API_KEY";
+    // Considera configurado se apiKey não é o placeholder
+    firebaseOK = firebaseConfig.apiKey && firebaseConfig.apiKey !== "COLE_SUA_API_KEY";
     if (firebaseOK) {
+      setSyncStatus('loading', '🔄 Conectando ao Firebase...');
       startRealtimeSync();
     } else {
-      setSyncStatus('warn', '⚠️ Firebase não configurado — dados salvos localmente');
+      setSyncStatus('warn', '⚠️ Firebase não configurado — salvando localmente');
     }
   } catch(e) {
-    setSyncStatus('err', '❌ Erro Firebase: ' + e.message);
+    setSyncStatus('err', '❌ Erro ao iniciar Firebase: ' + e.message);
+    console.error('Firebase init error:', e);
   }
 }
 
 async function startRealtimeSync() {
-  setSyncStatus('loading', 'Conectando ao Firebase...');
+  setSyncStatus('loading', '🔄 Carregando dados do Firebase...');
   try {
     // Primeiro carrega dados existentes
     const snap = await getDoc(doc(db, 'gbr', 'dados'));
     if (snap.exists()) {
-      const data = snap.data();
-      mergeData(data);
+      mergeData(snap.data());
       render();
+      setSyncStatus('ok', '🟢 Dados carregados — ouvindo em tempo real');
+    } else {
+      // Primeiro acesso: salva os dados iniciais
+      setSyncStatus('loading', '🔄 Primeiro acesso — salvando dados iniciais...');
+      await window.saveToFirebase();
     }
-    // Depois escuta mudanças em tempo real
+    // Escuta mudanças em tempo real
     unsubscribe = onSnapshot(doc(db, 'gbr', 'dados'), (snap) => {
       if (snap.exists() && !window._saving) {
         mergeData(snap.data());
         render();
-        setSyncStatus('ok', '🟢 Sincronizado em tempo real — ' + new Date().toLocaleTimeString('pt-BR'));
+        setSyncStatus('ok', '🟢 Sincronizado — ' + new Date().toLocaleTimeString('pt-BR'));
       }
+    }, (err) => {
+      // Erro no listener em tempo real
+      if (err.code === 'permission-denied') {
+        setSyncStatus('err', '❌ Permissão negada — ajuste as Regras do Firestore (veja instruções abaixo)');
+      } else {
+        setSyncStatus('err', '❌ Erro listener: ' + err.message);
+      }
+      console.error('Firestore listener error:', err);
     });
-    setSyncStatus('ok', '🟢 Firebase conectado — sincronização em tempo real ativa');
   } catch(e) {
-    setSyncStatus('err', '❌ Erro ao conectar: ' + e.message);
+    console.error('Firestore error:', e);
+    if (e.code === 'permission-denied') {
+      setSyncStatus('err', '🔒 PERMISSÃO NEGADA — Vá no Firebase Console → Firestore → Regras e altere para: allow read, write: if true;');
+    } else if (e.code === 'unavailable') {
+      setSyncStatus('err', '📡 Sem conexão com Firebase — usando dados locais');
+    } else {
+      setSyncStatus('err', '❌ Erro Firebase: [' + (e.code||'?') + '] ' + e.message);
+    }
+    // Fallback para localStorage
+    saveToLocal();
   }
 }
 
@@ -85,10 +108,11 @@ function mergeData(data) {
 window.saveToFirebase = async function() {
   if (!firebaseOK) {
     saveToLocal();
+    setSyncStatus('ok', '💾 Salvo localmente — ' + new Date().toLocaleTimeString('pt-BR'));
     return;
   }
   window._saving = true;
-  setSyncStatus('loading', 'Salvando...');
+  setSyncStatus('loading', '💾 Salvando...');
   const payload = {
     services: S.services, orc: S.orc, clientes: S.clientes,
     estoque: S.estoque, movEstoque: S.movEstoque, agenda: S.agenda,
@@ -98,10 +122,16 @@ window.saveToFirebase = async function() {
   };
   try {
     await setDoc(doc(db, 'gbr', 'dados'), payload);
-    setSyncStatus('ok', '🟢 Salvo em ' + new Date().toLocaleTimeString('pt-BR'));
+    saveToLocal(); // sempre salva local também como backup
+    setSyncStatus('ok', '🟢 Salvo no Firebase — ' + new Date().toLocaleTimeString('pt-BR'));
   } catch(e) {
-    setSyncStatus('err', '❌ Erro ao salvar: ' + e.message);
+    console.error('Save error:', e);
     saveToLocal();
+    if (e.code === 'permission-denied') {
+      setSyncStatus('err', '🔒 PERMISSÃO NEGADA — Ajuste as Regras do Firestore (Console Firebase → Firestore → Regras → allow read, write: if true;)');
+    } else {
+      setSyncStatus('err', '❌ Erro ao salvar: ' + e.message + ' — backup salvo localmente');
+    }
   }
   setTimeout(() => { window._saving = false; }, 500);
 };
@@ -676,15 +706,20 @@ function rConfig() {
   </div></div>
 
   <div class="config-section"><div class="config-sec-title">🔥 Firebase — Configuração</div>
-  <div class="alert-box info" style="margin-bottom:12px">
-    <div><strong>Para configurar o Firebase:</strong><br>
-    1. Edite o arquivo HTML e localize o bloco <code>firebaseConfig</code> no início<br>
-    2. Substitua os valores pelos do seu projeto Firebase<br>
-    3. No Console Firebase → Firestore → Regras, coloque: <code>allow read, write: if true;</code><br>
-    4. Salve e reabra o arquivo — a sincronização começa automaticamente
+  <div class="alert-box ok" style="margin-bottom:10px">✅ Firebase configurado: <strong>gbrsistema</strong> — verifique a barra inferior para status da conexão.</div>
+  <div class="alert-box warn" style="margin-bottom:12px">
+    <div><strong>⚠️ Se aparecer erro de PERMISSÃO NEGADA, faça isso:</strong><br><br>
+    1. Acesse <strong>console.firebase.google.com</strong><br>
+    2. Selecione o projeto <strong>gbrsistema</strong><br>
+    3. Menu lateral → <strong>Firestore Database</strong> → aba <strong>Regras</strong><br>
+    4. Substitua todo o conteúdo por:<br>
+    <code style="display:block;background:var(--bg5);padding:8px;border-radius:5px;margin-top:6px;font-size:11px">rules_version = '2';<br>service cloud.firestore {<br>&nbsp;&nbsp;match /databases/{database}/documents {<br>&nbsp;&nbsp;&nbsp;&nbsp;match /{document=**} {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;}<br>}</code><br>
+    5. Clique em <strong>Publicar</strong> — aguarde 30 segundos e tente novamente.
     </div>
   </div>
-  <div class="alert-box ok">✅ Enquanto o Firebase não estiver configurado, os dados são salvos automaticamente no <strong>localStorage do navegador</strong> (não se perdem ao fechar).</div>
+  <div class="alert-box info">
+    <div>💡 <strong>Dica de segurança:</strong> O modo <code>if true</code> deixa o banco aberto. Para uso pessoal está ótimo. No futuro, quando quiser restringir, use <code>if request.auth != null</code> com Firebase Auth.</div>
+  </div>
   </div>`;
 }
 
