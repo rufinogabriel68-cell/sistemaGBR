@@ -157,6 +157,98 @@ tr:hover td{background:var(--bg4)}
 .login-btn{width:100%;background:var(--bl2);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer}.login-btn:hover{background:var(--bl)}
 .login-err{color:var(--rd);font-size:12px;margin-top:8px;min-height:18px}
 @media(max-width:640px){.row2{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.nb{padding:4px 6px;font-size:10px}}
+/* ═══════════════════════════════════════════
+   MELHORIAS MOBILE
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+
+  /* TOPBAR: navegação vira scroll horizontal */
+  .topbar {
+    height: auto;
+    min-height: 50px;
+    padding: 8px 10px;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .logo { font-size: 14px; white-space: nowrap; }
+  .nav {
+    margin-left: 0;
+    flex-wrap: nowrap;           /* impede quebrar linha */
+    overflow-x: auto;            /* scroll suave horizontal */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;       /* esconde barra de scroll */
+    width: 100%;
+    padding-bottom: 4px;
+    gap: 4px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nb {
+    padding: 8px 10px;
+    font-size: 12px;
+    flex-shrink: 0;              /* impede esmagar botão */
+  }
+
+  /* CONTEÚDO */
+  .content { padding: 12px; }
+
+  /* GRIDS: sempre 1 coluna no celular */
+  .row2 { grid-template-columns: 1fr !important; gap: 10px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
+  .kpi { padding: 10px 12px; }
+  .kpi-v { font-size: 18px; }
+
+  /* TABELAS: scroll mais amigável */
+  .tw { border-radius: 8px; }
+  th, td { padding: 10px 8px; font-size: 13px; }
+
+  /* FORMULÁRIOS: dedo-friendly e evita zoom no iOS */
+  .fl input, .fl select, .fl textarea, .sb, .login-in {
+    padding: 10px 12px;
+    font-size: 16px;        /* iOS não dá zoom com 16px */
+    min-height: 44px;      /* área mínima de toque */
+  }
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+  .btn.sm {
+    padding: 8px 10px;
+    min-height: 36px;
+  }
+
+  /* CALCULADORA: força 1 coluna */
+  .calc-grid { grid-template-columns: 1fr !important; }
+
+  /* MODAIS: abrem mais confortáveis no celular */
+  .modal-ov {
+    padding: 8px;
+    align-items: flex-end;     /* modal gruda embaixo */
+  }
+  .modal {
+    padding: 16px;
+    border-radius: 14px 14px 0 0;
+    max-height: 92vh;
+    width: 100%;
+  }
+  .modal-t { font-size: 16px; }
+
+  /* FILTROS quebram linha automaticamente */
+  .filter-row { flex-wrap: wrap; }
+
+  /* FORM GRIDS internos viram 1 coluna */
+  .fg { grid-template-columns: 1fr !important; }
+
+  /* AGENDA: calendário maior */
+  .cal-grid { gap: 2px; }
+  .cal-day {
+    min-height: 44px;
+    padding: 4px 2px;
+    font-size: 10px;
+  }
+  .cal-ev { font-size: 8px; }
+}
 </style>
 </head>
 <body>
@@ -173,7 +265,7 @@ tr:hover td{background:var(--bg4)}
 
 <div class="app" id="approot" style="display:none">
   <div class="topbar">
-    <div class="logo" id="top-logo">GBR SOLUÇÕES <span id="top-sub">· Sistema de Gestão</span></div>
+    <div class="logo" id="top-logo">GBR SOLUÇÕES</div>
     <nav class="nav">
       <button class="nb active" onclick="pg('dash')">📊 Dashboard</button>
       <button class="nb" onclick="pg('servicos')">🔧 Serviços</button>
