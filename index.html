@@ -183,6 +183,7 @@ tr:hover td{background:var(--bg4)}
       <button class="nb" onclick="pg('estoque')">📦 Estoque</button>
       <button class="nb" onclick="pg('agenda')">📅 Agenda</button>
       <button class="nb" onclick="pg('fin')">💰 Financeiro</button>
+      <button class="nb" onclick="pg('notas')">📝 Notas</button>
       <button class="nb" onclick="pg('config')">⚙️ Config</button>
     </nav>
   </div>
@@ -305,7 +306,17 @@ const S={
     {desc:'Ferramentas',valor:120,data:'2025-05-07'},
   ],
   calcItems:[],calcMode:'medio',calcDesc:0,calcUrg:0,calcDesl:0,calcCom:0,
-  nextOrc:6,nextEst:10,nextCli:5,nextAg:5,nextLead:4,nextGar:4,
+  nextOrc:6,nextEst:10,nextCli:5,nextAg:5,nextLead:4,nextGar:4,nextNota:1,
+  notas:[
+    {id:1,titulo:'Configurar roteador cliente novo',texto:'Senha padrão: admin/admin. Trocar para WPA2. Verificar canal Wi-Fi para evitar interferência.',cor:'bl',fixada:true,data:'2025-05-15',checklist:[{id:1,texto:'Resetar fábrica',ok:true},{id:2,texto:'Configurar SSID e senha',ok:false},{id:3,texto:'Testar velocidade',ok:false}]},
+    {id:2,titulo:'Compras pendentes estoque',texto:'Repor materiais antes da próxima semana.',cor:'am',fixada:false,data:'2025-05-14',checklist:[{id:1,texto:'Suporte TV fixo (2un)',ok:false},{id:2,texto:'Pasta térmica (3un)',ok:true},{id:3,texto:'Cabo HDMI 2m (5un)',ok:false}]},
+  ],
+  recExtras:[
+    {id:1,desc:'Consultoria avulsa - Site de loja',valor:200,data:'2025-05-10',cat:'Consultoria'},
+    {id:2,desc:'Indicação paga - CFTV residência',valor:80,data:'2025-05-08',cat:'Indicação'},
+  ],
+  nextRecExtra:3,
+  finTab:'visao',
 };
 
 const UNIDADES=['un','m','ml','l','kg','g','rolo','par','cx','pç'];
@@ -318,14 +329,15 @@ const ORIGENS=['Indicação','Instagram','Google','WhatsApp','Passagem','Outro']
 function buildPayload(){
   return{services:S.services,orc:S.orc,clientes:S.clientes,leads:S.leads,garantias:S.garantias,
     estoque:S.estoque,movEstoque:S.movEstoque,agenda:S.agenda,gastos:S.gastos,
+    notas:S.notas,recExtras:S.recExtras,
     cfg:S.cfg,categorias:S.categorias,
-    nextOrc:S.nextOrc,nextEst:S.nextEst,nextCli:S.nextCli,nextAg:S.nextAg,nextLead:S.nextLead,nextGar:S.nextGar,
+    nextOrc:S.nextOrc,nextEst:S.nextEst,nextCli:S.nextCli,nextAg:S.nextAg,nextLead:S.nextLead,nextGar:S.nextGar,nextNota:S.nextNota,nextRecExtra:S.nextRecExtra,
     updatedAt:new Date().toISOString()};
 }
 function mergeData(d){
-  ['services','orc','clientes','leads','garantias','estoque','movEstoque','agenda','gastos','categorias'].forEach(k=>{if(d[k])S[k]=d[k];});
+  ['services','orc','clientes','leads','garantias','estoque','movEstoque','agenda','gastos','categorias','notas','recExtras'].forEach(k=>{if(d[k])S[k]=d[k];});
   if(d.cfg)Object.assign(S.cfg,d.cfg);
-  ['nextOrc','nextEst','nextCli','nextAg','nextLead','nextGar'].forEach(k=>{if(d[k])S[k]=d[k];});
+  ['nextOrc','nextEst','nextCli','nextAg','nextLead','nextGar','nextNota','nextRecExtra'].forEach(k=>{if(d[k])S[k]=d[k];});
 }
 function lSave(){try{localStorage.setItem('gbr_data',JSON.stringify(buildPayload()));}catch(e){}}
 function lLoad(){try{const r=localStorage.getItem('gbr_data');if(r){mergeData(JSON.parse(r));return true;}}catch(e){}return false;}
@@ -339,7 +351,7 @@ lLoad();
 // ═══════════════════════════════════════════
 function pg(p){
   S.page=p;
-  const map={dash:'📊',servicos:'🔧',calc:'🧮',orc:'📋',crm:'👥',estoque:'📦',agenda:'📅',fin:'💰',config:'⚙️'};
+  const map={dash:'📊',servicos:'🔧',calc:'🧮',orc:'📋',crm:'👥',estoque:'📦',agenda:'📅',fin:'💰',notas:'📝',config:'⚙️'};
   document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',b.textContent.trim().startsWith(map[p]||'__')));
   render();
 }
@@ -366,9 +378,8 @@ function renderFiltered(){
 
 function render(){
   const el=document.getElementById('root');if(!el)return;
-  const pages={dash:rDash,servicos:rServicos,calc:rCalc,orc:rOrc,crm:rCRM,estoque:rEstoque,agenda:rAgenda,fin:rFin,config:rConfig};
+  const pages={dash:rDash,servicos:rServicos,calc:rCalc,orc:rOrc,crm:rCRM,estoque:rEstoque,agenda:rAgenda,fin:rFin,notas:rNotas,config:rConfig};
   el.innerHTML=(pages[S.page]||rDash)();
-  // re-vincular eventos dos inputs de busca APÓS render para não perder foco
   bindSearchInputs();
 }
 
@@ -749,19 +760,212 @@ function rAgenda(){
 }
 
 // ═══════════════════════════════════════════
-//  FINANCEIRO
+//  FINANCEIRO — reformulado v6
 // ═══════════════════════════════════════════
 function rFin(){
+  if(!S.finTab)S.finTab='visao';
   const aprov=S.orc.filter(o=>o.status==='Aprovado');
-  const fat=aprov.reduce((a,o)=>a+o.valor,0),lucro=aprov.reduce((a,o)=>a+o.lucro,0);
-  const gasto=S.gastos.reduce((a,g)=>a+g.valor,0),saldo=lucro-gasto;
-  return `<div class="sh"><div class="sh-t">💰 Financeiro</div><button class="btn" onclick="mNovoGasto()">+ Gasto</button></div>
-  <div class="kpi-grid"><div class="kpi bl"><div class="kpi-l">Faturamento</div><div class="kpi-v">${R(fat)}</div></div><div class="kpi gr"><div class="kpi-l">Lucro bruto</div><div class="kpi-v">${R(lucro)}</div></div><div class="kpi re"><div class="kpi-l">Gastos</div><div class="kpi-v">${R(gasto)}</div></div><div class="kpi ${saldo>0?'gr':'re'}"><div class="kpi-l">Saldo</div><div class="kpi-v">${R(saldo)}</div></div></div>
-  <div class="row2">
-    <div class="card"><div class="card-t">🎯 Metas</div>${[['Meta mensal',fat,S.cfg.metaMensal],['Meta semanal',fat/4,S.cfg.metaSemanal],['Meta anual',fat,S.cfg.metaAnual]].map(([lbl,val,meta])=>{const p=Math.min(100,Math.round(val/meta*100));return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px"><span style="color:var(--tx2)">${lbl}</span><span style="font-weight:700;color:${p>=100?'var(--gr)':p>=60?'var(--am)':'var(--rd)'}">${p}%</span></div><div style="font-size:10px;color:var(--tx3);margin-bottom:3px">${R(val)} / ${R(meta)}</div><div class="prog"><div class="prog-f ${p>=100?'gr':p>=60?'am':'re'}" style="width:${p}%"></div></div></div>`;}).join('')}</div>
-    <div class="card"><div class="card-t">📊 Distribuição de gastos</div><div class="bar-chart">${gasto>0?S.gastos.map(g=>`<div class="bar-row"><div class="bar-lbl">${g.desc}</div><div class="bar-track"><div class="bar-f" style="width:${Math.round(g.valor/gasto*100)}%;background:var(--rd)"></div></div><div class="bar-val" style="color:var(--rd)">R$${g.valor}</div></div>`).join(''):'<div style="color:var(--tx3);text-align:center;padding:12px;font-size:12px">Nenhum gasto registrado</div>'}</div></div>
+  const fatOrc=aprov.reduce((a,o)=>a+o.valor,0);
+  const lucroOrc=aprov.reduce((a,o)=>a+o.lucro,0);
+  const totalExtras=S.recExtras.reduce((a,r)=>a+r.valor,0);
+  const totalGastos=S.gastos.reduce((a,g)=>a+g.valor,0);
+  const totalBruto=fatOrc+totalExtras;
+  const totalLiquido=totalBruto-totalGastos;
+  const tabs=`<div class="stabs">
+    <button class="stab ${S.finTab==='visao'?'active':''}" onclick="S.finTab='visao';render()">🌐 Visão Geral</button>
+    <button class="stab ${S.finTab==='gbr'?'active':''}" onclick="S.finTab='gbr';render()">🏢 GBR Soluções</button>
+    <button class="stab ${S.finTab==='gastos'?'active':''}" onclick="S.finTab='gastos';render()">💸 Gastos</button>
+  </div>`;
+
+  if(S.finTab==='visao'){
+    const fontes=[
+      {label:'Orçamentos GBR',valor:fatOrc,cor:'var(--bl3)'},
+      {label:'Receitas Extras',valor:totalExtras,cor:'var(--tl)'},
+    ];
+    const maxFonte=Math.max(...fontes.map(f=>f.valor),1);
+    const hoje=new Date();
+    const diasUteisMes=22;
+    const diaAtual=hoje.getDate();
+    const diasUteisPassados=Math.min(diaAtual,diasUteisMes);
+    const projecaoMensal=diasUteisPassados>0?Math.round(totalBruto/diasUteisPassados*diasUteisMes):totalBruto;
+    const projecaoAnual=projecaoMensal*12;
+    const horasSemanais=40;
+    const valorHora=projecaoAnual/(horasSemanais*52);
+    const fontesPct = totalBruto>0
+      ? fontes.map(f => {
+          const pct = Math.round(f.valor/totalBruto*100);
+          return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px"><span style="color:var(--tx2)">${f.label}</span><span style="font-weight:700;color:${f.cor}">${pct}%</span></div><div style="font-size:10px;color:var(--tx3);margin-bottom:3px">${R(f.valor)} de ${R(totalBruto)}</div><div class="prog"><div class="prog-f" style="width:${pct}%;background:${f.cor}"></div></div></div>`;
+        }).join('')
+      : '<div style="color:var(--tx3);text-align:center;padding:12px;font-size:12px">Nenhuma receita registrada</div>';
+    return (
+      `<div class="sh"><div class="sh-t">💰 Financeiro</div></div>
+    ${tabs}
+    <div class="kpi-grid">
+      <div class="kpi bl"><div class="kpi-l">Total Bruto</div><div class="kpi-v">${R(totalBruto)}</div><div class="kpi-s">todas as fontes</div></div>
+      <div class="kpi gr"><div class="kpi-l">Total Líquido</div><div class="kpi-v">${R(totalLiquido)}</div><div class="kpi-s">descontando gastos</div></div>
+      <div class="kpi tl"><div class="kpi-l">Receitas Extras</div><div class="kpi-v">${R(totalExtras)}</div><div class="kpi-s">${S.recExtras.length} lançamentos</div></div>
+      <div class="kpi re"><div class="kpi-l">Gastos</div><div class="kpi-v">${R(totalGastos)}</div><div class="kpi-s">${S.gastos.length} lançamentos</div></div>
+    </div>
+    <div class="row2">
+      <div class="card"><div class="card-t">📊 Composição da renda</div><div class="bar-chart">
+        ${fontes.map(f=>`<div class="bar-row">
+          <div class="bar-lbl">${f.label.length>13?f.label.slice(0,13)+'…':f.label}</div>
+          <div class="bar-track"><div class="bar-f" style="width:${Math.round(f.valor/maxFonte*100)}%;background:${f.cor}"></div></div>
+          <div class="bar-val" style="color:${f.cor}">${R(f.valor)}</div>
+        </div>`).join('')}
+        <div class="bar-row" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--bd)">
+          <div class="bar-lbl" style="color:var(--rd)">Gastos</div>
+          <div class="bar-track"><div class="bar-f" style="width:${Math.round(totalGastos/maxFonte*100)}%;background:var(--rd)"></div></div>
+          <div class="bar-val" style="color:var(--rd)">${R(totalGastos)}</div>
+        </div>
+      </div></div>
+      <div class="card"><div class="card-t">📈 Porcentagem por fonte</div>
+        ${fontesPct}
+      </div>
+    </div>
+    <div class="card"><div class="card-t">🚀 Projeções e valor do seu trabalho</div>
+      <div class="fg">
+        <div class="kpi bl" style="border:none;background:var(--bg4)"><div class="kpi-l">Projeção Mensal</div><div class="kpi-v">${R(projecaoMensal)}</div><div class="kpi-s">baseado nos dias úteis</div></div>
+        <div class="kpi gr" style="border:none;background:var(--bg4)"><div class="kpi-l">Projeção Anual</div><div class="kpi-v">${R(projecaoAnual)}</div><div class="kpi-s">×12 meses</div></div>
+        <div class="kpi am" style="border:none;background:var(--bg4)"><div class="kpi-l">Valor/Hora estimado</div><div class="kpi-v">${R(valorHora)}</div><div class="kpi-s">base 40h/sem</div></div>
+        <div class="kpi pu" style="border:none;background:var(--bg4)"><div class="kpi-l">% Extras no total</div><div class="kpi-v">${totalBruto>0?Math.round(totalExtras/totalBruto*100):0}%</div><div class="kpi-s">receitas fora de orçamentos</div></div>
+      </div>
+      <div style="margin-top:10px;background:var(--bg4);border-radius:8px;padding:12px;font-size:12px;color:var(--tx2)">
+        💡 <strong style="color:var(--bl3)">TI pleno em Arujá</strong> ganha em média R$4.500–R$6.000/mês CLT. Seu faturamento atual equivale a <strong style="color:${projecaoMensal>=4500?'var(--gr)':'var(--am)'}">${projecaoMensal>=6000 ? '⬆️ acima' : projecaoMensal>=4500 ? '🟡 dentro de' : '⬇️ abaixo de'} essa faixa</strong>.
+      </div>
+    </div>`);
+  }
+
+  if(S.finTab==='gbr'){
+    const categorias=['Consultoria','Venda de material','Indicação','Comissão','Outros'];
+    const barrasCategorias = categorias.map(cat=>{
+      const tot = S.recExtras.filter(r=>r.cat===cat).reduce((a,r)=>a+r.valor,0);
+      return tot>0?`<div class="bar-row"><div class="bar-lbl">${cat}</div><div class="bar-track"><div class="bar-f" style="width:${Math.round(tot/Math.max(totalExtras,1)*100)}%;background:var(--tl)"></div></div><div class="bar-val" style="color:var(--tl)">${R(tot)}</div></div>`:'';
+    }).join('') || '<div style="color:var(--tx3);text-align:center;padding:12px;font-size:12px">Nenhuma receita extra</div>';
+    const recExtrasTabela = S.recExtras.length>0 ? `<div class="tw" style="border:none;margin:0"><table><thead><tr><th>Descrição</th><th style="width:14%">Categoria</th><th style="width:12%">Data</th><th style="width:12%">Valor</th><th style="width:8%">Ação</th></tr></thead>
+      <tbody>${[...S.recExtras].reverse().map((r,i)=>`<tr><td style="font-weight:600">${r.desc}</td><td><span class="badge tl">${r.cat}</span></td><td style="color:var(--tx2);font-size:11px">${r.data}</td><td style="color:var(--tl);font-weight:700">${R(r.valor)}</td><td><button class="btn danger sm" onclick="delRecExtra(${r.id})">🗑</button></td></tr>`).join('')}
+      </tbody></table></div>` : '';
+    return `<div class="sh"><div class="sh-t">💰 Financeiro</div><button class="btn success" onclick="mNovaRecExtra()">+ Receita Extra</button></div>
+    ${tabs}
+    <div class="kpi-grid">
+      <div class="kpi bl"><div class="kpi-l">Faturamento (orçamentos)</div><div class="kpi-v">${R(fatOrc)}</div><div class="kpi-s">${aprov.length} aprovados</div></div>
+      <div class="kpi tl"><div class="kpi-l">Receitas extras</div><div class="kpi-v">${R(totalExtras)}</div><div class="kpi-s">${S.recExtras.length} lançamentos</div></div>
+      <div class="kpi gr"><div class="kpi-l">Total GBR</div><div class="kpi-v">${R(fatOrc+totalExtras)}</div><div class="kpi-s">bruto total</div></div>
+      <div class="kpi am"><div class="kpi-l">Lucro orçamentos</div><div class="kpi-v">${R(lucroOrc)}</div><div class="kpi-s">margem ${fatOrc>0?Math.round(lucroOrc/fatOrc*100):0}%</div></div>
+    </div>
+    <div class="row2">
+      <div class="card"><div class="card-t">📋 Últimos orçamentos aprovados</div><div class="mini-list">
+        ${aprov.slice(-5).reverse().map(o=>`<div class="mi"><div><div style="font-weight:600">${o.cliente}</div><div style="font-size:10px;color:var(--tx3)">${o.tipo} · ${o.data}</div></div><div style="text-align:right"><div style="font-weight:700;color:var(--bl3)">${R(o.valor)}</div><div style="font-size:10px;color:var(--gr)">L: ${R(o.lucro)}</div></div></div>`).join('')||'<div style="color:var(--tx3);text-align:center;padding:12px">Nenhum orçamento aprovado</div>'}
+      </div></div>
+      <div class="card"><div class="card-t">💡 Receitas extras por categoria</div><div class="bar-chart">
+        ${barrasCategorias}
+      </div></div>
+    </div>
+    <div class="card"><div class="card-t">📑 Receitas extras — lançamentos</div>
+      ${S.recExtras.length===0?'<div style="color:var(--tx3);text-align:center;padding:20px;font-size:12px">Nenhuma receita extra registrada ainda.<br>Clique em <strong>+ Receita Extra</strong> para registrar consultorias, vendas de material, indicações, etc.</div>':''}
+      ${recExtrasTabela}
+    </div>`;
+  }
+
+  if(S.finTab==='gastos'){
+    const diasUteis=22;
+    const mediaDia=totalGastos/diasUteis;
+    const catGastos={};S.gastos.forEach(g=>{catGastos[g.desc]=(catGastos[g.desc]||0)+g.valor;});
+    const topCats=Object.entries(catGastos).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    return`<div class="sh"><div class="sh-t">💰 Financeiro</div><button class="btn danger" onclick="mNovoGasto()">+ Gasto</button></div>
+    ${tabs}
+    <div class="kpi-grid">
+      <div class="kpi re"><div class="kpi-l">Total de gastos</div><div class="kpi-v">${R(totalGastos)}</div><div class="kpi-s">${S.gastos.length} lançamentos</div></div>
+      <div class="kpi am"><div class="kpi-l">Média por dia útil</div><div class="kpi-v">${R(mediaDia)}</div><div class="kpi-s">base ${diasUteis} dias úteis</div></div>
+      <div class="kpi ${totalLiquido>=0?'gr':'re'}"><div class="kpi-l">Saldo líquido</div><div class="kpi-v">${R(totalLiquido)}</div><div class="kpi-s">renda - gastos</div></div>
+      <div class="kpi pu"><div class="kpi-l">% sobre renda</div><div class="kpi-v">${totalBruto>0?Math.round(totalGastos/totalBruto*100):0}%</div><div class="kpi-s">da renda total</div></div>
+    </div>
+    <div class="row2">
+      <div class="card"><div class="card-t">📊 Distribuição por tipo</div><div class="bar-chart">
+        ${topCats.length>0?topCats.map(([desc,val])=>`<div class="bar-row"><div class="bar-lbl">${desc.length>12?desc.slice(0,12)+'…':desc}</div><div class="bar-track"><div class="bar-f" style="width:${Math.round(val/totalGastos*100)}%;background:var(--rd)"></div></div><div class="bar-val" style="color:var(--rd)">${R(val)}</div></div>`).join(''):'<div style="color:var(--tx3);text-align:center;padding:12px;font-size:12px">Sem dados</div>'}
+      </div></div>
+      <div class="card"><div class="card-t">📋 Últimos lançamentos</div><div class="mini-list">
+        ${[...S.gastos].reverse().slice(0,5).map(g=>`<div class="mi"><div><div style="font-weight:600">${g.desc}</div><div style="font-size:10px;color:var(--tx3)">${g.data}</div></div><span style="color:var(--rd);font-weight:700">${R(g.valor)}</span></div>`).join('')||'<div style="color:var(--tx3);text-align:center;padding:12px;font-size:12px">Nenhum gasto</div>'}
+      </div></div>
+    </div>
+    <div class="card"><div class="card-t">🧾 Todos os lançamentos de gastos</div>
+      <div class="tw" style="border:none;margin:0"><table><thead><tr><th>Descrição</th><th style="width:14%">Data</th><th style="width:14%">Valor</th><th style="width:14%">% do total</th><th style="width:8%">Ação</th></tr></thead>
+      <tbody>${S.gastos.length>0?[...S.gastos].reverse().map((g,i)=>`<tr><td style="font-weight:600">${g.desc}</td><td style="color:var(--tx2);font-size:11px">${g.data}</td><td style="color:var(--rd);font-weight:700">${R(g.valor)}</td><td><div class="prog" style="margin:0"><div class="prog-f re" style="width:${Math.round(g.valor/totalGastos*100)}%"></div></div><div style="font-size:10px;color:var(--tx3);margin-top:2px">${Math.round(g.valor/totalGastos*100)}%</div></td><td><button class="btn danger sm" onclick="delGasto(${S.gastos.indexOf(S.gastos.find(x=>x.desc===g.desc&&x.valor===g.valor&&x.data===g.data))})">🗑</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:20px">Nenhum gasto registrado</td></tr>'}
+      </tbody></table></div>
+    </div>`;
+  }
+  return '';
+}
+
+// ═══════════════════════════════════════════
+//  NOTAS & CHECKLIST
+// ═══════════════════════════════════════════
+function rNotas(){
+  if(!S.notas)S.notas=[];
+  const fixadas=S.notas.filter(n=>n.fixada);
+  const normais=S.notas.filter(n=>!n.fixada);
+  const todas=[...fixadas,...normais];
+  const corMap={bl:'var(--bl3)',gr:'var(--gr)',am:'var(--am)',pu:'var(--pu)',tl:'var(--tl)',pk:'var(--pk)',re:'var(--rd)'};
+  const corBg={bl:'#3b82f611',gr:'#22c55e11',am:'#f59e0b11',pu:'#a855f711',tl:'#14b8a611',pk:'#ec489911',re:'#ef444411'};
+  const corBd={bl:'#3b82f630',gr:'#22c55e30',am:'#f59e0b30',pu:'#a855f730',tl:'#14b8a630',pk:'#ec489930',re:'#ef444430'};
+  const totalChk=S.notas.reduce((a,n)=>a+(n.checklist?n.checklist.length:0),0);
+  const totalOk=S.notas.reduce((a,n)=>a+(n.checklist?n.checklist.filter(c=>c.ok).length:0),0);
+  return`<div class="sh"><div class="sh-t">📝 Notas & Checklist <span class="tag">${S.notas.length}</span></div>
+    <button class="btn" onclick="mNovaNota()">+ Nova Nota</button>
   </div>
-  <div class="card"><div class="card-t">🧾 Lançamentos</div><div class="tw" style="border:none;margin:0"><table><thead><tr><th>Descrição</th><th>Data</th><th>Valor</th><th style="width:10%">Ação</th></tr></thead><tbody>${S.gastos.map((g,i)=>`<tr><td>${g.desc}</td><td style="color:var(--tx2)">${g.data}</td><td style="color:var(--rd);font-weight:700">R$${g.valor.toFixed(2)}</td><td><button class="btn danger sm" onclick="S.gastos.splice(${i},1);render();auto()">🗑</button></td></tr>`).join('')}</tbody></table></div></div>`;
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+    <div class="kpi bl"><div class="kpi-l">Total de notas</div><div class="kpi-v">${S.notas.length}</div></div>
+    <div class="kpi am"><div class="kpi-l">Fixadas</div><div class="kpi-v">${fixadas.length}</div></div>
+    <div class="kpi gr"><div class="kpi-l">Tarefas concluídas</div><div class="kpi-v">${totalOk}<span style="font-size:12px;color:var(--tx3)">/${totalChk}</span></div></div>
+    <div class="kpi pu"><div class="kpi-l">Pendências</div><div class="kpi-v">${totalChk-totalOk}</div></div>
+  </div>
+  ${todas.length===0?`<div class="card" style="text-align:center;padding:40px;color:var(--tx3)">
+    <div style="font-size:40px;margin-bottom:12px">📝</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Nenhuma nota ainda</div>
+    <div style="font-size:12px">Crie sua primeira nota para organizar lembretes, checklists e tarefas do dia a dia.</div>
+  </div>`:''}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+    ${todas.map(n=>{
+      const clrs=n.cor||'bl';
+      const chkTot=n.checklist?n.checklist.length:0;
+      const chkOk=n.checklist?n.checklist.filter(c=>c.ok).length:0;
+      const pct=chkTot>0?Math.round(chkOk/chkTot*100):0;
+      return`<div style="background:${corBg[clrs]};border:1px solid ${corBd[clrs]};border-radius:var(--r);padding:14px;position:relative;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:flex-start;gap:6px;justify-content:space-between">
+          <div style="font-weight:700;font-size:13px;color:${corMap[clrs]};flex:1">${n.fixada?'📌 ':''} ${n.titulo}</div>
+          <div style="display:flex;gap:3px;flex-shrink:0">
+            <button class="btn ghost sm" onclick="toggleFixar(${n.id})" title="${n.fixada?'Desafixar':'Fixar'}">${n.fixada?'📌':'📍'}</button>
+            <button class="btn ghost sm" onclick="mEditNota(${n.id})">✏️</button>
+            <button class="btn danger sm" onclick="delNota(${n.id})">🗑</button>
+          </div>
+        </div>
+        ${n.texto?`<div style="font-size:12px;color:var(--tx2);line-height:1.5;white-space:pre-wrap">${n.texto}</div>`:''}
+        ${chkTot>0?`<div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--tx3);margin-bottom:4px"><span>Checklist</span><span>${chkOk}/${chkTot} — ${pct}%</span></div>
+          <div class="prog" style="margin-bottom:8px"><div class="prog-f ${pct===100?'gr':pct>=50?'am':'re'}" style="width:${pct}%"></div></div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${n.checklist.map(c=>`<div style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer" onclick="toggleCheck(${n.id},${c.id})">
+              <div style="width:15px;height:15px;border-radius:4px;border:1px solid ${c.ok?'var(--gr)':'var(--bd2)'};background:${c.ok?'var(--gr)22':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                ${c.ok?`<span style="color:var(--gr);font-size:10px">✓</span>`:''}
+              </div>
+              <span style="color:${c.ok?'var(--tx3)':'var(--tx)'};text-decoration:${c.ok?'line-through':''}">${c.texto}</span>
+            </div>`).join('')}
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <input id="chk-new-${n.id}" class="sb" style="flex:1;font-size:11px;padding:4px 7px" placeholder="+ Nova tarefa..." onkeydown="if(event.key==='Enter')addCheckItem(${n.id})">
+            <button class="btn sm" onclick="addCheckItem(${n.id})">+</button>
+          </div>
+        </div>`:`<div>
+          <div style="font-size:10px;color:var(--tx3);margin-bottom:6px">Nenhuma tarefa ainda</div>
+          <div style="display:flex;gap:6px">
+            <input id="chk-new-${n.id}" class="sb" style="flex:1;font-size:11px;padding:4px 7px" placeholder="+ Adicionar tarefa...">
+            <button class="btn sm" onclick="addCheckItem(${n.id})">+</button>
+          </div>
+        </div>`}
+        <div style="font-size:10px;color:var(--tx3);margin-top:2px">${n.data||''}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -1046,7 +1250,114 @@ function salvarConfig(){
   if(tl){tl.childNodes[0].textContent=S.cfg.empresa+' ';document.getElementById('top-sub').textContent='· '+S.cfg.sub;}
   alert('✅ Configurações salvas!');render();auto();
 }
+// ═══════════════════════════════════════════
+//  RECEITAS EXTRAS (faltava)
+// ═══════════════════════════════════════════
+function mNovaRecExtra(){
+  openM(`<<div class="modal-t">💡 Nova Receita Extra <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Descrição</label><input id="rd" placeholder="Ex: Consultoria avulsa"></div>
+    <div class="fl"><label>Categoria</label><select id="rcat">
+      <option>Consultoria</option>
+      <option>Venda de material</option>
+      <option>Indicação</option>
+      <option>Comissão</option>
+      <option>Outros</option>
+    </select></div>
+    <div class="fl"><label>Valor (R$)</label><input id="rv" type="number" step="0.01"></div>
+    <div class="fl"><label>Data</label><input id="rdt" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+    <button class="btn ghost" onclick="closeM()">Cancelar</button>
+    <button class="btn success" onclick="salvarNovaRecExtra()">Salvar</button>
+  </div>`);
+}
+function salvarNovaRecExtra(){
+  S.recExtras.push({
+    id: S.nextRecExtra++,
+    desc: document.getElementById('rd').value || 'Receita extra',
+    valor: +document.getElementById('rv').value || 0,
+    data: document.getElementById('rdt').value,
+    cat: document.getElementById('rcat').value
+  });
+  closeM(); render(); auto();
+}
 
+// ═══════════════════════════════════════════
+//  NOTAS (faltava)
+// ═══════════════════════════════════════════
+function mNovaNota(){
+  openM(`<<div class="modal-t">📝 Nova Nota <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Título</label><input id="ntit" placeholder="Ex: Configurar roteador"></div>
+    <div class="fl"><label>Cor / Tema</label><select id="ncor">
+      <option value="bl">🔵 Azul</option>
+      <option value="gr">🟢 Verde</option>
+      <option value="am">🟡 Amarelo</option>
+      <option value="pu">🟣 Roxo</option>
+      <option value="tl">🩵 Turquesa</option>
+      <option value="pk">🩷 Rosa</option>
+      <option value="re">🔴 Vermelho</option>
+    </select></div>
+    <div class="fl"><label>Fixar no topo?</label><select id="nfix"><option value="false">Não</option><option value="true">Sim</option></select></div>
+    <div class="fl"><label>Conteúdo</label><textarea id="ntxt" placeholder="Digite sua nota..."></textarea></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+    <button class="btn ghost" onclick="closeM()">Cancelar</button>
+    <button class="btn" onclick="salvarNovaNota()">Salvar</button>
+  </div>`);
+}
+function salvarNovaNota(){
+  S.notas.push({
+    id: S.nextNota++,
+    titulo: document.getElementById('ntit').value || 'Sem título',
+    texto: document.getElementById('ntxt').value || '',
+    cor: document.getElementById('ncor').value || 'bl',
+    fixada: document.getElementById('nfix').value === 'true',
+    data: new Date().toISOString().slice(0,10),
+    checklist: []
+  });
+  closeM(); render(); auto();
+}
+
+// ═══════════════════════════════════════════
+//  EDITAR NOTA (também faltava)
+// ═══════════════════════════════════════════
+function mEditNota(id){
+  const n = S.notas.find(x => x.id === id);
+  if(!n) return;
+  openM(`<<div class="modal-t">✏️ Editar Nota <button class="xbtn" onclick="closeM()">✕</button></div>
+  <div class="fg">
+    <div class="fl"><label>Título</label><input id="etit" value="${n.titulo}"></div>
+    <div class="fl"><label>Cor / Tema</label><select id="ecor">
+      <option value="bl" ${n.cor==='bl'?'selected':''}>🔵 Azul</option>
+      <option value="gr" ${n.cor==='gr'?'selected':''}>🟢 Verde</option>
+      <option value="am" ${n.cor==='am'?'selected':''}>🟡 Amarelo</option>
+      <option value="pu" ${n.cor==='pu'?'selected':''}>🟣 Roxo</option>
+      <option value="tl" ${n.cor==='tl'?'selected':''}>🩵 Turquesa</option>
+      <option value="pk" ${n.cor==='pk'?'selected':''}>🩷 Rosa</option>
+      <option value="re" ${n.cor==='re'?'selected':''}>🔴 Vermelho</option>
+    </select></div>
+    <div class="fl"><label>Fixar no topo?</label><select id="efix">
+      <option value="false" ${!n.fixada?'selected':''}>Não</option>
+      <option value="true" ${n.fixada?'selected':''}>Sim</option>
+    </select></div>
+    <div class="fl"><label>Conteúdo</label><textarea id="etxt">${n.texto||''}</textarea></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+    <button class="btn ghost" onclick="closeM()">Cancelar</button>
+    <button class="btn" onclick="salvarEditNota(${id})">Salvar</button>
+  </div>`);
+}
+function salvarEditNota(id){
+  const n = S.notas.find(x => x.id === id);
+  if(!n) return;
+  n.titulo = document.getElementById('etit').value || n.titulo;
+  n.texto = document.getElementById('etxt').value;
+  n.cor = document.getElementById('ecor').value;
+  n.fixada = document.getElementById('efix').value === 'true';
+  closeM(); render(); auto();
+}
 render();
 </script>
 </body>
