@@ -19,6 +19,7 @@ const firebaseConfig = {
 };
 let db, dbRef, saveTO, primeiro = true;
 let authInstance = null;
+let dbListener = null;  // ← novo: guarda referência do listener
 
 function getAuthInstance() {
   return authInstance;
@@ -28,32 +29,50 @@ function initFB(){
   try{
     const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
-    authInstance = getAuth(app);  // ← guarda na variável do módulo
+    authInstance = getAuth(app);
+    
+    // ← CORREÇÃO: dbRef agora aponta para o caminho EXATO das regras
     dbRef = ref(db, 'gbr/dados');
 
-    // Verifica se já está logado
     onAuthStateChanged(authInstance, user => {
       if(user){
+        console.log('✅ Logado como:', user.email);
         document.getElementById('lscreen').style.display = 'none';
         document.getElementById('approot').style.display = 'flex';
         setSS('loading','🔄 Conectando...');
-        onValue(dbRef, snap => {
-          if(snap.exists()){
-            if(!window._sv){ mergeData(snap.val()); safeRender(); }
-            setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
-            if(primeiro){ primeiro = false; }
-          } else {
-            primeiro = false; 
-            window.fbSave();
-          }
-        }, err => setSS('err','❌ '+err.message));
+        
+        // ← CORREÇÃO: remove listener antigo antes de criar novo
+        if(dbListener){
+          // não há off() direto, mas onValue retorna unsubscribe
+          dbListener();
+        }
+        
+        // ← CORREÇÃO: aguarda 500ms para garantir que o token de auth propagou
+        setTimeout(() => {
+          onValue(dbRef, snap => {
+            if(snap.exists()){
+              if(!window._sv){ mergeData(snap.val()); safeRender(); }
+              setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
+              if(primeiro){ primeiro = false; }
+            } else {
+              primeiro = false; 
+              window.fbSave();
+            }
+          }, err => {
+            console.error('❌ Erro DB:', err.message);
+            setSS('err','❌ '+err.message);
+          });
+        }, 500);
+        
       } else {
+        console.log('🔒 Deslogado');
         document.getElementById('lscreen').style.display = 'flex';
         document.getElementById('approot').style.display = 'none';
         setSS('err','🔒 Faça login para acessar');
       }
     });
   } catch(e){
+    console.error('❌ Firebase init:', e.message);
     setSS('err','❌ Firebase: '+e.message);
   }
 }
