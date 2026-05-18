@@ -17,27 +17,93 @@ const firebaseConfig = {
   messagingSenderId: "549796148409",
   appId: "1:549796148409:web:cbc828cca4b114882d5768"
 };
-let db,dbRef,saveTO,primeiro=true;
+let db, dbRef, saveTO, primeiro = true;
+let authInstance = null;
+
+function getAuthInstance() {
+  return authInstance;
+}
+
 function initFB(){
   try{
-    db=getDatabase(initializeApp(firebaseConfig));
-    dbRef=ref(db,'gbr/dados');
-    setSS('loading','🔄 Conectando...');
-    onValue(dbRef,snap=>{
-      if(snap.exists()){
-        if(!window._sv){mergeData(snap.val());safeRender();}
-        setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
-        if(primeiro){primeiro=false;}
-      }else{primeiro=false;window.fbSave();}
-    },err=>setSS('err','❌ '+err.message));
-  }catch(e){setSS('err','❌ Firebase: '+e.message);}
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    authInstance = getAuth(app);  // ← guarda na variável do módulo
+    dbRef = ref(db, 'gbr/dados');
+
+    // Verifica se já está logado
+    onAuthStateChanged(authInstance, user => {
+      if(user){
+        document.getElementById('lscreen').style.display = 'none';
+        document.getElementById('approot').style.display = 'flex';
+        setSS('loading','🔄 Conectando...');
+        onValue(dbRef, snap => {
+          if(snap.exists()){
+            if(!window._sv){ mergeData(snap.val()); safeRender(); }
+            setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
+            if(primeiro){ primeiro = false; }
+          } else {
+            primeiro = false; 
+            window.fbSave();
+          }
+        }, err => setSS('err','❌ '+err.message));
+      } else {
+        document.getElementById('lscreen').style.display = 'flex';
+        document.getElementById('approot').style.display = 'none';
+        setSS('err','🔒 Faça login para acessar');
+      }
+    });
+  } catch(e){
+    setSS('err','❌ Firebase: '+e.message);
+  }
 }
-window.fbSave=async function(){
-  window._sv=true;setSS('loading','💾 Salvando...');
-  try{await set(dbRef,buildPayload());lSave();setSS('ok','🟢 Salvo — '+new Date().toLocaleTimeString('pt-BR'));}
-  catch(e){lSave();setSS('err','❌ '+e.message);}
-  setTimeout(()=>{window._sv=false;},800);
+
+window.fbSave = async function(){
+  if(!getAuthInstance() || !getAuthInstance().currentUser){
+    setSS('err','🔒 Você foi desconectado. Faça login novamente.');
+    return;
+  }
+  window._sv = true;
+  setSS('loading','💾 Salvando...');
+  try{
+    await set(dbRef, buildPayload());
+    lSave();
+    setSS('ok','🟢 Salvo — '+new Date().toLocaleTimeString('pt-BR'));
+  } catch(e){
+    lSave();
+    setSS('err','❌ '+e.message);
+  }
+  setTimeout(() => { window._sv = false; }, 800);
 };
+
+function doLogin(){
+  const email = document.getElementById('lemail').value.trim();
+  const pass = document.getElementById('lpass').value;
+  const errEl = document.getElementById('lerr');
+  
+  if(!email || !pass){
+    errEl.textContent = 'Preencha email e senha.';
+    return;
+  }
+  
+  const auth = getAuthInstance();  // ← pega a instância aqui
+  if(!auth){
+    errEl.textContent = 'Erro: Firebase não inicializado. Recarregue a página.';
+    return;
+  }
+  
+  signInWithEmailAndPassword(auth, email, pass)
+    .then(() => {
+      errEl.textContent = '';
+    })
+    .catch(e => {
+      errEl.textContent = 'Email ou senha incorretos.';
+      document.getElementById('lpass').value = '';
+      setTimeout(() => errEl.textContent = '', 3000);
+    });
+}
+window.doLogin = doLogin;
+window.getAuthInstance = getAuthInstance;
 window.scheduleSave=function(){clearTimeout(saveTO);saveTO=setTimeout(()=>window.fbSave(),1500);};
 initFB();
 </script>
@@ -257,14 +323,15 @@ tr:hover td{background:var(--bg4)}
 <div class="login-wrap" id="lscreen">
   <div class="login-box">
     <div class="login-logo">GBR</div>
-    <div class="login-sub">Sistema de Gestão · Acesso restrito</div>
+    <div class="login-sub">Acesso restrito — Login seguro</div>
+    <input class="login-in" type="email" id="lemail" placeholder="seu@email.com" style="letter-spacing:0;text-align:left" onkeydown="if(event.key==='Enter')document.getElementById('lpass').focus()">
     <input class="login-in" type="password" id="lpass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <button class="login-btn" onclick="window.doLogin()">Entrar</button>
     <div class="login-err" id="lerr"></div>
   </div>
 </div>
 
-<div class="app" id="approot" style="display:none">
+<div class="app" id="approot" style="display:flex">
   <div class="topbar">
     <div class="logo" id="top-logo">GBR SOLUÇÕES</div>
     <nav class="nav">
@@ -295,25 +362,6 @@ tr:hover td{background:var(--bg4)}
 <input type="file" id="fimp" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
-// ═══════════════════════════════════════════
-//  SENHA
-// ═══════════════════════════════════════════
-const SENHA="gbr2025";
-function doLogin(){
-  if(document.getElementById('lpass').value===SENHA){
-    document.getElementById('lscreen').style.display='none';
-    document.getElementById('approot').style.display='flex';
-    render();
-  }else{
-    document.getElementById('lerr').textContent='Senha incorreta.';
-    document.getElementById('lpass').value='';
-    setTimeout(()=>document.getElementById('lerr').textContent='',3000);
-  }
-}
-function setSS(st,msg){
-  const d=document.getElementById('sdot'),m=document.getElementById('smsg');
-  if(d)d.className='sync-dot '+st;if(m)m.textContent=msg;
-}
 
 // ═══════════════════════════════════════════
 //  ESTADO GLOBAL
