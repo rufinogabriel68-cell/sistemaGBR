@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GBR Soluções — Sistema de Gestão</title>
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+<script>
+// ============ FIREBASE VIA IMPORT DINÂMICO (script clássico) ============
+// Script clássico executa IMEDIATAMENTE — não deferred como module
+// window.doLogin fica disponível no momento do clique
+
 function setSS(type, msg) {
   const dot = document.getElementById('sdot');
   const sm  = document.getElementById('smsg');
@@ -16,7 +17,20 @@ function setSS(type, msg) {
   dot.className = 'sync-dot ' + (map[type] || 'loading');
   sm.textContent = msg;
 }
-window.setSS = setSS; // expõe para o script clássico também
+window.setSS = setSS;
+
+const CLIENT_ID = Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+window.CLIENT_ID = CLIENT_ID;
+let lastLocalSave = 0;
+window.lastLocalSave = lastLocalSave;
+
+let db, dbRef, saveTO, primeiro = true;
+let authInstance = null;
+let dbListener = null;
+
+function getAuthInstance() { return authInstance; }
+window.getAuthInstance = getAuthInstance;
+
 const firebaseConfig = {
   apiKey: "AIzaSyAPYCe1CJkksTdoinfLQpv6ety0OheqyOc",
   authDomain: "sistemagbr-f6b4e.firebaseapp.com",
@@ -26,23 +40,21 @@ const firebaseConfig = {
   messagingSenderId: "549796148409",
   appId: "1:549796148409:web:cbc828cca4b114882d5768"
 };
-let db, dbRef, saveTO, primeiro = true;
-let authInstance = null;
-let dbListener = null;  // ← guarda referência do listener
-const CLIENT_ID = Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
-let lastLocalSave = 0;   // timestamp do último save local (para detectar eco)
 
-function getAuthInstance() {
-  return authInstance;
-}
+// ============ CARREGAR FIREBASE VIA IMPORT DINÂMICO ============
+let _firebase = null;
 
-function initFB(){
+async function initFB(){
   try{
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getDatabase, ref, set, onValue } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const { getAuth, signInWithEmailAndPassword, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+
+    _firebase = { initializeApp, getDatabase, ref, set, onValue, getAuth, signInWithEmailAndPassword, onAuthStateChanged };
+
     const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
     authInstance = getAuth(app);
-    
-    // ← CORREÇÃO: dbRef agora aponta para o caminho EXATO das regras
     dbRef = ref(db, 'gbr/dados');
 
     onAuthStateChanged(authInstance, user => {
@@ -51,38 +63,27 @@ function initFB(){
         document.getElementById('lscreen').style.display = 'none';
         document.getElementById('approot').style.display = 'flex';
         setSS('loading','🔄 Conectando...');
-        
-        // ← CORREÇÃO: remove listener antigo antes de criar novo
-        if(dbListener){
-          dbListener();  // unsubscribe do listener anterior
-        }
 
-        // ← CORREÇÃO: aguarda 300ms para garantir que o token de auth propagou
+        if(dbListener){ dbListener(); }
+
         setTimeout(() => {
           dbListener = onValue(dbRef, snap => {
             if(snap.exists()){
               const data = snap.val();
-
-              // DETECÇÃO DE ECO: ignora apenas se for o eco do PRÓPRIO dispositivo
-              // (mesmo clientId e timestamp idêntico ao último save local)
-              const isEco = data._clientId === CLIENT_ID && data._lastSaved === lastLocalSave;
+              const isEco = data._clientId === window.CLIENT_ID && data._lastSaved === window.lastLocalSave;
 
               if(isEco){
-                // É o eco do nosso próprio save — apenas libera o lock e ignora
                 window._sv = false;
                 setSS('ok','🟢 Salvo — '+new Date().toLocaleTimeString('pt-BR'));
                 return;
               }
 
-              // É atualização de OUTRO dispositivo (ou primeira carga)
-              // Substituição completa dos dados (nunca merge!)
               window._sv = false;
               applyRemoteData(data);
               safeRender();
               setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
               if(primeiro){ primeiro = false; }
             } else {
-              // Firebase vazio — salva estado local inicial
               primeiro = false;
               window.fbSave();
             }
@@ -91,7 +92,7 @@ function initFB(){
             setSS('err','❌ '+err.message);
           });
         }, 300);
-        
+
       } else {
         console.log('🔒 Deslogado');
         document.getElementById('lscreen').style.display = 'flex';
@@ -111,13 +112,11 @@ window.fbSave = async function(){
     return;
   }
   window._sv = true;
-  lastLocalSave = Date.now();
+  window.lastLocalSave = Date.now();
   setSS('loading','💾 Salvando...');
   try{
-    await set(dbRef, buildPayload());
+    await _firebase.set(dbRef, buildPayload());
     lSave();
-    // NÃO limpamos _sv aqui — esperamos o onValue detectar o eco
-    // ou, como fallback, limpamos após 3s se o eco não chegar
     setTimeout(() => { window._sv = false; }, 3000);
   } catch(e){
     window._sv = false;
@@ -130,22 +129,20 @@ function doLogin(){
   const email = document.getElementById('lemail').value.trim();
   const pass = document.getElementById('lpass').value;
   const errEl = document.getElementById('lerr');
-  
+
   if(!email || !pass){
     errEl.textContent = 'Preencha email e senha.';
     return;
   }
-  
-  const auth = getAuthInstance();  // ← pega a instância aqui
+
+  const auth = getAuthInstance();
   if(!auth){
     errEl.textContent = 'Erro: Firebase não inicializado. Recarregue a página.';
     return;
   }
-  
-  signInWithEmailAndPassword(auth, email, pass)
-    .then(() => {
-      errEl.textContent = '';
-    })
+
+  _firebase.signInWithEmailAndPassword(auth, email, pass)
+    .then(() => { errEl.textContent = ''; })
     .catch(e => {
       errEl.textContent = 'Email ou senha incorretos.';
       document.getElementById('lpass').value = '';
@@ -153,9 +150,11 @@ function doLogin(){
     });
 }
 window.doLogin = doLogin;
-window.getAuthInstance = getAuthInstance;
-window.scheduleSave=function(){clearTimeout(saveTO);saveTO=setTimeout(()=>window.fbSave(),1500);};
-initFB();
+
+window.scheduleSave = function(){clearTimeout(saveTO);saveTO=setTimeout(()=>window.fbSave(),1500);};
+
+// Iniciar Firebase quando DOM estiver pronto (mas funções já estão no window)
+document.addEventListener('DOMContentLoaded', initFB);
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -513,7 +512,7 @@ function buildPayload(){
     nextAg:S.nextAg, nextLead:S.nextLead, nextGar:S.nextGar,
     nextNota:S.nextNota, nextRecExtra:S.nextRecExtra,
     nextGasto:S.nextGasto || 1,
-    _clientId: CLIENT_ID,
+    _clientId: window.CLIENT_ID,
     _lastSaved: Date.now(),
     updatedAt:new Date().toISOString()
   };
