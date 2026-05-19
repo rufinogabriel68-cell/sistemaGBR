@@ -8,6 +8,15 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+function setSS(type, msg) {
+  const dot = document.getElementById('sdot');
+  const sm  = document.getElementById('smsg');
+  if (!dot || !sm) return;
+  const map = { ok: 'ok', err: 'err', loading: 'loading', warn: 'warn' };
+  dot.className = 'sync-dot ' + (map[type] || 'loading');
+  sm.textContent = msg;
+}
+window.setSS = setSS; // expõe para o script clássico também
 const firebaseConfig = {
   apiKey: "AIzaSyAPYCe1CJkksTdoinfLQpv6ety0OheqyOc",
   authDomain: "sistemagbr-f6b4e.firebaseapp.com",
@@ -49,19 +58,19 @@ function initFB(){
         
         // ← CORREÇÃO: aguarda 500ms para garantir que o token de auth propagou
         setTimeout(() => {
-          onValue(dbRef, snap => {
-            if(snap.exists()){
-              if(!window._sv){ mergeData(snap.val()); safeRender(); }
-              setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
-              if(primeiro){ primeiro = false; }
-            } else {
-              primeiro = false; 
-              window.fbSave();
-            }
-          }, err => {
+        onValue(dbRef, snap => {
+          if(snap.exists()){
+            if(!window._sv){ mergeData(snap.val()); safeRender(); }
+            setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
+            if(primeiro){ primeiro = false; }
+          } else {
+            primeiro = false; 
+            window.fbSave();
+          }
+        }, err => {
             console.error('❌ Erro DB:', err.message);
-            setSS('err','❌ '+err.message);
-          });
+          setSS('err','❌ '+err.message);
+        });
         }, 500);
         
       } else {
