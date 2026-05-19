@@ -28,7 +28,9 @@ const firebaseConfig = {
 };
 let db, dbRef, saveTO, primeiro = true;
 let authInstance = null;
-let dbListener = null;  // ← novo: guarda referência do listener
+let dbListener = null;  // ← guarda referência do listener
+const CLIENT_ID = Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
+let lastLocalSave = 0;   // timestamp do último save local (para detectar eco)
 
 function getAuthInstance() {
   return authInstance;
@@ -52,26 +54,43 @@ function initFB(){
         
         // ← CORREÇÃO: remove listener antigo antes de criar novo
         if(dbListener){
-          // não há off() direto, mas onValue retorna unsubscribe
-          dbListener();
+          dbListener();  // unsubscribe do listener anterior
         }
-        
-        // ← CORREÇÃO: aguarda 500ms para garantir que o token de auth propagou
+
+        // ← CORREÇÃO: aguarda 300ms para garantir que o token de auth propagou
         setTimeout(() => {
-        onValue(dbRef, snap => {
-          if(snap.exists()){
-            if(!window._sv){ mergeData(snap.val()); safeRender(); }
-            setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
-            if(primeiro){ primeiro = false; }
-          } else {
-            primeiro = false; 
-            window.fbSave();
-          }
-        }, err => {
+          dbListener = onValue(dbRef, snap => {
+            if(snap.exists()){
+              const data = snap.val();
+
+              // DETECÇÃO DE ECO: ignora apenas se for o eco do PRÓPRIO dispositivo
+              // (mesmo clientId e timestamp idêntico ao último save local)
+              const isEco = data._clientId === CLIENT_ID && data._lastSaved === lastLocalSave;
+
+              if(isEco){
+                // É o eco do nosso próprio save — apenas libera o lock e ignora
+                window._sv = false;
+                setSS('ok','🟢 Salvo — '+new Date().toLocaleTimeString('pt-BR'));
+                return;
+              }
+
+              // É atualização de OUTRO dispositivo (ou primeira carga)
+              // Substituição completa dos dados (nunca merge!)
+              window._sv = false;
+              applyRemoteData(data);
+              safeRender();
+              setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
+              if(primeiro){ primeiro = false; }
+            } else {
+              // Firebase vazio — salva estado local inicial
+              primeiro = false;
+              window.fbSave();
+            }
+          }, err => {
             console.error('❌ Erro DB:', err.message);
-          setSS('err','❌ '+err.message);
-        });
-        }, 500);
+            setSS('err','❌ '+err.message);
+          });
+        }, 300);
         
       } else {
         console.log('🔒 Deslogado');
@@ -92,16 +111,19 @@ window.fbSave = async function(){
     return;
   }
   window._sv = true;
+  lastLocalSave = Date.now();
   setSS('loading','💾 Salvando...');
   try{
     await set(dbRef, buildPayload());
     lSave();
-    setSS('ok','🟢 Salvo — '+new Date().toLocaleTimeString('pt-BR'));
+    // NÃO limpamos _sv aqui — esperamos o onValue detectar o eco
+    // ou, como fallback, limpamos após 3s se o eco não chegar
+    setTimeout(() => { window._sv = false; }, 3000);
   } catch(e){
+    window._sv = false;
     lSave();
     setSS('err','❌ '+e.message);
   }
-  setTimeout(() => { window._sv = false; }, 800);
 };
 
 function doLogin(){
@@ -491,14 +513,37 @@ function buildPayload(){
     nextAg:S.nextAg, nextLead:S.nextLead, nextGar:S.nextGar,
     nextNota:S.nextNota, nextRecExtra:S.nextRecExtra,
     nextGasto:S.nextGasto || 1,
+    _clientId: CLIENT_ID,
+    _lastSaved: Date.now(),
     updatedAt:new Date().toISOString()
   };
 }
-function mergeData(d){
-  ['services','orc','clientes','leads','garantias','estoque','movEstoque','agenda','gastos','categorias','notas','recExtras'].forEach(k=>{if(d[k])S[k]=d[k];});
-  if(d.cfg)Object.assign(S.cfg,d.cfg);
+function applyRemoteData(d){
+  // Aplica dados do Firebase substituindo completamente os arrays de dados.
+  // Preserva apenas o estado de UI (página atual, abas, filtros de busca).
+  const uiState = {
+    page:S.page, crmTab:S.crmTab, estTab:S.estTab,
+    srvQ:S.srvQ, srvCat:S.srvCat, orcQ:S.orcQ, cliQ:S.cliQ,
+    estQ:S.estQ, leadQ:S.leadQ, finTab:S.finTab,
+    calcItems:S.calcItems, calcMode:S.calcMode,
+    calcDesc:S.calcDesc, calcUrg:S.calcUrg, calcDesl:S.calcDesl, calcCom:S.calcCom
+  };
+
+  // Substituição completa dos dados (Firebase é fonte da verdade)
+  ['services','orc','clientes','leads','garantias','estoque','movEstoque','agenda','gastos','categorias','notas','recExtras'].forEach(k=>{
+    if(d[k] !== undefined) S[k] = d[k];
+  });
+  if(d.cfg) Object.assign(S.cfg, d.cfg);
   if(d.nextGasto !== undefined) S.nextGasto = d.nextGasto;
-  ['nextOrc','nextEst','nextCli','nextAg','nextLead','nextGar','nextNota','nextRecExtra'].forEach(k=>{if(d[k])S[k]=d[k];});
+  ['nextOrc','nextEst','nextCli','nextAg','nextLead','nextGar','nextNota','nextRecExtra'].forEach(k=>{
+    if(d[k] !== undefined) S[k] = d[k];
+  });
+
+  // Restaura estado de UI
+  Object.assign(S, uiState);
+
+  // Sincroniza localStorage com os dados mais recentes do Firebase
+  lSave();
 }
 function lSave(){try{localStorage.setItem('gbr_data',JSON.stringify(buildPayload()));}catch(e){}}
 function lLoad(){try{const r=localStorage.getItem('gbr_data');if(r){mergeData(JSON.parse(r));return true;}}catch(e){}return false;}
