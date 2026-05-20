@@ -55,7 +55,24 @@ async function initFB(){
     const app = initializeApp(firebaseConfig);
     db = getDatabase(app);
     authInstance = getAuth(app);
-    dbRef = ref(db, 'gbr/dados');
+    const refs = {
+  services: ref(db, 'gbr/services'),
+  orc: ref(db, 'gbr/orc'),
+  clientes: ref(db, 'gbr/clientes'),
+  leads: ref(db, 'gbr/leads'),
+  garantias: ref(db, 'gbr/garantias'),
+  estoque: ref(db, 'gbr/estoque'),
+  movEstoque: ref(db, 'gbr/movEstoque'),
+  agenda: ref(db, 'gbr/agenda'),
+  gastos: ref(db, 'gbr/gastos'),
+  notas: ref(db, 'gbr/notas'),
+  recExtras: ref(db, 'gbr/recExtras'),
+  cfg: ref(db, 'gbr/cfg'),
+  categorias: ref(db, 'gbr/categorias'),
+  meta: ref(db, 'gbr/meta')
+};
+
+window.dbRefs = refs;
 
     onAuthStateChanged(authInstance, user => {
       if(user){
@@ -67,30 +84,49 @@ async function initFB(){
         if(dbListener){ dbListener(); }
 
         setTimeout(() => {
-          dbListener = onValue(dbRef, snap => {
-            if(snap.exists()){
-              const data = snap.val();
-              const isEco = data._clientId === window.CLIENT_ID && data._lastSaved === window.lastLocalSave;
+         Object.entries(window.dbRefs).forEach(([key, refDB]) => {
 
-              if(isEco){
-                window._sv = false;
-                setSS('ok','🟢 Salvo — '+new Date().toLocaleTimeString('pt-BR'));
-                return;
-              }
+  _firebase.onValue(refDB, snap => {
 
-              window._sv = false;
-              applyRemoteData(data);
-              safeRender();
-              setSS('ok','🟢 Sincronizado — '+new Date().toLocaleTimeString('pt-BR'));
-              if(primeiro){ primeiro = false; }
-            } else {
-              primeiro = false;
-              window.fbSave();
-            }
-          }, err => {
-            console.error('❌ Erro DB:', err.message);
-            setSS('err','❌ '+err.message);
-          });
+    if(!snap.exists()) return;
+
+    const data = snap.val();
+
+    if(key === 'meta'){
+
+      S.nextOrc = data.nextOrc || S.nextOrc;
+      S.nextEst = data.nextEst || S.nextEst;
+      S.nextCli = data.nextCli || S.nextCli;
+      S.nextAg = data.nextAg || S.nextAg;
+      S.nextLead = data.nextLead || S.nextLead;
+      S.nextGar = data.nextGar || S.nextGar;
+      S.nextNota = data.nextNota || S.nextNota;
+      S.nextRecExtra = data.nextRecExtra || S.nextRecExtra;
+      S.nextGasto = data.nextGasto || S.nextGasto;
+
+    } else {
+
+      S[key] = data;
+
+    }
+
+    queueRender();
+
+    setSS(
+      'ok',
+      '🟢 '+key+' sincronizado - '+
+      new Date().toLocaleTimeString('pt-BR')
+    );
+
+  }, err => {
+
+    console.error('❌ Erro '+key+':', err.message);
+
+    setSS('err','❌ '+err.message);
+
+  });
+
+});
         }, 300);
 
       } else {
@@ -114,16 +150,61 @@ window.fbSave = async function(){
   window._sv = true;
   window.lastLocalSave = Date.now();
   setSS('loading','💾 Salvando...');
+
+  if(!getAuthInstance()?.currentUser){
+    setSS('err','🔒 Faça login novamente');
+    return;
+  }
+
   try{
-    await _firebase.set(dbRef, buildPayload());
+    setSS('loading','💾 Salvando...');
+
+    const promises = [];
+
+    Object.entries({
+      services:S.services,
+      orc:S.orc,
+      clientes:S.clientes,
+      leads:S.leads,
+      garantias:S.garantias,
+      estoque:S.estoque,
+      movEstoque:S.movEstoque,
+      agenda:S.agenda,
+      gastos:S.gastos,
+      notas:S.notas,
+      recExtras:S.recExtras,
+      cfg:S.cfg,
+      categorias:S.categorias,
+      meta:{
+        nextOrc:S.nextOrc,
+        nextEst:S.nextEst,
+        nextCli:S.nextCli,
+        nextAg:S.nextAg,
+        nextLead:S.nextLead,
+        nextGar:S.nextGar,
+        nextNota:S.nextNota,
+        nextRecExtra:S.nextRecExtra,
+        nextGasto:S.nextGasto,
+        updatedAt: Date.now(),
+        clientId: window.CLIENT_ID
+      }
+    }).forEach(([key,val])=>{
+      promises.push(
+        _firebase.set(window.dbRefs[key], val)
+      );
+    });
+
+    await Promise.all(promises);
+
     lSave();
-    setTimeout(() => { window._sv = false; }, 3000);
-  } catch(e){
-    window._sv = false;
-    lSave();
+
+    setSS('ok','🟢 Salvo');
+
+  }catch(e){
+    console.error(e);
     setSS('err','❌ '+e.message);
   }
-};
+}
 
 function doLogin(){
   const email = document.getElementById('lemail').value.trim();
@@ -562,12 +643,25 @@ function pg(p){
 }
 
 // RENDER SEM RECRIAR INPUT FOCADO
+let renderTO;
+function queueRender(){
+  clearTimeout(renderTO);
+  renderTO = setTimeout(()=>{
+    safeRender();
+  },100);
+}
 function safeRender(){
   const active=document.activeElement;
   const wasId=active&&active.id?active.id:null;
   const wasSel=(active&&active.tagName==='INPUT')?active.selectionStart:null;
   render();
-  if(wasId){const el=document.getElementById(wasId);if(el){el.focus();if(wasSel!==null)try{el.setSelectionRange(wasSel,wasSel);}catch(e){}}}
+  if(wasId){
+    const el=document.getElementById(wasId);
+    if(el){
+      el.focus();
+      if(wasSel!==null) try{ el.setSelectionRange(wasSel,wasSel); }catch(e){}
+    }
+  }
 }
 
 // updateSearch: atualiza filtro e regera apenas a tbody/lista sem perder foco
@@ -1562,7 +1656,7 @@ function salvarNovaNota(){
 function mEditNota(id){
   const n = S.notas.find(x => x.id === id);
   if(!n) return;
-  openM(`<<div class="modal-t">✏️ Editar Nota <button class="xbtn" onclick="closeM()">✕</button></div>
+  openM(`<div class="modal-t">✏️ Editar Nota <button class="xbtn" onclick="closeM()">✕</button></div>
   <div class="fg">
     <div class="fl"><label>Título</label><input id="etit" value="${n.titulo}"></div>
     <div class="fl"><label>Cor / Tema</label><select id="ecor">
