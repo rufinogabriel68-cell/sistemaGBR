@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Abrir Chamado — GBR Soluções</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0b1a;
+  --surface:#13102a;
+  --surface2:#1a1535;
+  --border:rgba(138,100,255,0.18);
+  --primary:#7c4dff;
+  --primary2:#9c6fff;
+  --accent:#c840e0;
+  --green:#22d787;
+  --red:#ff4e6a;
+  --yellow:#f5c518;
+  --text:#e8e2ff;
+  --muted:#7a6fa8;
+  --r:14px;
+  --rs:8px;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',system-ui,sans-serif;
+  min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% -10%,rgba(124,77,255,0.12) 0%,transparent 70%),
+    radial-gradient(ellipse 40% 40% at 90% 100%,rgba(200,64,224,0.06) 0%,transparent 70%);
+}
+
+/* ── HEADER ── */
+.header{
+  text-align:center;padding:40px 20px 32px;
+  border-bottom:1px solid var(--border);
+}
+.logo-wrap{
+  display:inline-flex;align-items:center;gap:12px;margin-bottom:16px;
+}
+.logo-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:grid;place-items:center;font-size:20px;
+  box-shadow:0 0 24px rgba(124,77,255,0.4);
+}
+.logo-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;}
+.logo-name span{display:block;font-size:11px;font-weight:400;color:var(--muted);font-family:'DM Sans',sans-serif;letter-spacing:0;}
+.header-title{
+  font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
+  letter-spacing:-0.8px;margin-bottom:8px;
+  background:linear-gradient(135deg,var(--text),var(--primary2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.header-sub{font-size:14px;color:var(--muted);line-height:1.6;max-width:420px;margin:0 auto;}
+
+/* ── MAIN CONTAINER ── */
+.container{max-width:640px;margin:0 auto;padding:28px 16px 60px;}
+
+/* ── STEPS INDICATOR ── */
+.steps{
+  display:flex;align-items:center;margin-bottom:28px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 20px;
+}
+.step{flex:1;text-align:center;position:relative;}
+.step-num{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;margin:0 auto 5px;
+  background:var(--surface2);border:2px solid var(--border);
+  color:var(--muted);transition:all .3s;
+}
+.step.active .step-num{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 12px rgba(124,77,255,0.4);}
+.step.done .step-num{background:var(--green);border-color:var(--green);color:#fff;}
+.step-lbl{font-size:10px;color:var(--muted);font-weight:500;}
+.step.active .step-lbl{color:var(--primary2);}
+.step.done .step-lbl{color:var(--green);}
+.step-line{flex:0.5;height:2px;background:var(--border);margin:0 4px;margin-bottom:18px;transition:background .3s;}
+.step-line.done{background:var(--green);}
+
+/* ── CARD ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:16px;
+}
+.card-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.card-icon{font-size:18px;}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.card-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.card-body{padding:20px;}
+
+/* ── FORM ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fg.full{grid-template-columns:1fr;}
+.fl{display:flex;flex-direction:column;gap:5px;}
+.fl.span2{grid-column:1/-1;}
+label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;}
+.req{color:var(--red);}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);border-radius:var(--rs);
+  padding:11px 13px;font-size:14px;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  width:100%;font-family:'DM Sans',sans-serif;
+  -webkit-appearance:none;appearance:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(124,77,255,0.12);
+}
+input.error,select.error,textarea.error{border-color:var(--red);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%237a6fa8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+select option{background:var(--surface);}
+textarea{resize:vertical;min-height:100px;line-height:1.6;}
+.field-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+.err-msg{font-size:11px;color:var(--red);margin-top:3px;display:none;}
+.err-msg.show{display:block;}
+
+/* ── TIPO DE SERVIÇO CHIPS ── */
+.tipo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.tipo-chip{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--rs);padding:10px 8px;text-align:center;
+  cursor:pointer;transition:all .15s;
+}
+.tipo-chip:hover{border-color:var(--primary);background:rgba(124,77,255,0.07);}
+.tipo-chip.sel{
+  background:rgba(124,77,255,0.15);border-color:var(--primary);
+  box-shadow:0 0 0 2px rgba(124,77,255,0.2);
+}
+.tipo-chip .ic{font-size:20px;display:block;margin-bottom:4px;}
+.tipo-chip .nm{font-size:10px;font-weight:600;color:var(--muted);}
+.tipo-chip.sel .nm{color:var(--primary2);}
+
+/* ── URGÊNCIA TOGGLE ── */
+.urgencia-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--rs);padding:14px 16px;cursor:pointer;
+  transition:all .15s;
+}
+.urgencia-row.active{
+  background:rgba(255,78,106,0.08);border-color:rgba(255,78,106,0.3);
+}
+.urgencia-row .toggle{
+  width:42px;height:24px;border-radius:12px;
+  background:var(--border);position:relative;transition:background .2s;flex-shrink:0;
+}
+.urgencia-row.active .toggle{background:var(--red);}
+.urgencia-row .toggle::after{
+  content:'';position:absolute;width:18px;height:18px;
+  border-radius:50%;background:#fff;top:3px;left:3px;
+  transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.urgencia-row.active .toggle::after{left:21px;}
+.urgencia-text{flex:1;}
+.urgencia-text strong{display:block;font-size:13px;}
+.urgencia-text span{font-size:11px;color:var(--muted);}
+.urgencia-row.active .urgencia-text strong{color:var(--red);}
+
+/* ── FOTO UPLOAD ── */
+.foto-area{
+  border:2px dashed var(--border);border-radius:var(--rs);
+  padding:24px;text-align:center;cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.foto-area:hover{border-color:var(--primary);background:rgba(124,77,255,0.04);}
+.foto-area input{display:none;}
+.foto-icon{font-size:28px;margin-bottom:8px;}
+.foto-text{font-size:12px;color:var(--muted);}
+.foto-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.foto-thumb{
+  width:72px;height:72px;object-fit:cover;
+  border-radius:var(--rs);border:1px solid var(--border);
+}
+
+/* ── SUMMARY CARD ── */
+.summary-item{
+  display:flex;gap:12px;padding:10px 0;
+  border-bottom:1px solid var(--border);font-size:13px;
+}
+.summary-item:last-child{border-bottom:none;}
+.summary-label{color:var(--muted);min-width:110px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding-top:1px;}
+.summary-val{color:var(--text);font-weight:500;flex:1;}
+
+/* ── BUTTONS ── */
+.btn-row{display:flex;gap:10px;margin-top:20px;}
+.btn{
+  flex:1;padding:14px;border-radius:var(--rs);
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;border:none;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{border-color:var(--primary);color:var(--text);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  color:#fff;box-shadow:0 4px 16px rgba(124,77,255,0.35);
+}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(124,77,255,0.5);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.5;pointer-events:none;}
+
+/* ── SUCCESS ── */
+.success-wrap{text-align:center;padding:48px 20px;}
+.success-icon{
+  width:72px;height:72px;border-radius:50%;
+  background:rgba(34,215,135,0.12);border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 20px;
+  box-shadow:0 0 32px rgba(34,215,135,0.2);
+}
+.success-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:8px;}
+.success-id{
+  font-family:monospace;font-size:18px;font-weight:700;
+  color:var(--primary2);background:rgba(124,77,255,0.1);
+  border:1px solid rgba(124,77,255,0.25);border-radius:var(--rs);
+  padding:10px 20px;display:inline-block;margin:12px 0;letter-spacing:1px;
+}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.7;max-width:400px;margin:0 auto 24px;}
+.success-steps{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;text-align:left;margin:0 auto 20px;max-width:400px;
+}
+.ss-item{display:flex;gap:12px;margin-bottom:14px;font-size:13px;align-items:flex-start;}
+.ss-item:last-child{margin-bottom:0;}
+.ss-num{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--primary);display:grid;place-items:center;
+  font-size:10px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px;
+}
+
+/* ── LOADING ── */
+.loading-ov{
+  position:fixed;inset:0;background:rgba(13,11,26,.85);
+  display:none;align-items:center;justify-content:center;z-index:999;
+  backdrop-filter:blur(4px);flex-direction:column;gap:14px;
+}
+.loading-ov.show{display:flex;}
+.spinner{
+  width:44px;height:44px;border-radius:50%;
+  border:3px solid var(--border);border-top-color:var(--primary);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-txt{font-size:14px;color:var(--muted);}
+
+/* ── FOOTER ── */
+.footer{
+  text-align:center;padding:24px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--muted);
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:500px){
+  .header-title{font-size:22px;}
+  .fg{grid-template-columns:1fr;}
+  .fl.span2{grid-column:auto;}
+  .tipo-grid{grid-template-columns:repeat(2,1fr);}
+  .btn-row{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-ov" id="loading-ov">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Enviando chamado...</div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-wrap">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-name">GBR Soluções <span>Seu Sobrinho de Aluguel</span></div>
+  </div>
+  <div class="header-title">Abrir um Chamado</div>
+  <div class="header-sub">Preencha o formulário abaixo e entraremos em contato em breve para agendar o atendimento.</div>
+</div>
+
+<div class="container">
+
+  <!-- STEPS -->
+  <div class="steps" id="steps-bar">
+    <div class="step active" id="step-ind-1">
+      <div class="step-num">1</div>
+      <div class="step-lbl">Seus dados</div>
+    </div>
+    <div class="step-line" id="step-line-1"></div>
+    <div class="step" id="step-ind-2">
+      <div class="step-num">2</div>
+      <div class="step-lbl">Problema</div>
+    </div>
+    <div class="step-line" id="step-line-2"></div>
+    <div class="step" id="step-ind-3">
+      <div class="step-num">3</div>
+      <div class="step-lbl">Confirmar</div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 1: DADOS DO CLIENTE ═══ -->
+  <div id="s1">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">👤</span>
+        <div>
+          <div class="card-title">Seus dados de contato</div>
+          <div class="card-sub">Campos com <span class="req">*</span> são obrigatórios</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="fg">
+          <div class="fl span2">
+            <label>Nome completo <span class="req">*</span></label>
+            <input id="f-nome" type="text" placeholder="Ex: João da Silva" autocomplete="name">
+            <div class="err-msg" id="e-nome">Por favor informe seu nome.</div>
+          </div>
+          <div class="fl">
+            <label>WhatsApp <span class="req">*</span></label>
+            <input id="f-tel" type="tel" placeholder="(11) 99999-0000" autocomplete="tel">
+            <div class="err-msg" id="e-tel">Informe um telefone válido.</div>
+          </div>
+          <div class="fl">
+            <label>E-mail</label>
+            <input id="f-email" type="email" placeholder="seu@email.com" autocomplete="email">
+            <div class="field-hint">Usado para enviar atualizações do chamado.</div>
+          </div>
+          <div class="fl span2">
+            <label>Endereço / Bairro <span class="req">*</span></label>
+            <input id="f-end" type="text" placeholder="Ex: Rua das Flores, 100 — Arujá" autocomplete="street-address">
+            <div class="err-msg" id="e-end">Informe seu endereço.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="irStep2()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2: PROBLEMA ═══ -->
+  <div id="s2" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🔧</span>
+        <div>
+          <div class="card-title">Qual é o problema?</div>
+          <div class="card-sub">Nos conte o máximo de detalhes possível</div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <!-- Tipo de serviço -->
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:10px">Tipo de serviço <span class="req">*</span></label>
+          <div class="tipo-grid" id="tipo-grid">
+            <div class="tipo-chip" onclick="selTipo(this,'Informática')"><span class="ic">💻</span><span class="nm">Informática</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'Formatação')"><span class="ic">🔄</span><span class="nm">Formatação</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'Rede / Wi-Fi')"><span class="ic">📶</span><span class="nm">Rede / Wi-Fi</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'CFTV / Câmeras')"><span class="ic">📷</span><span class="nm">CFTV / Câmeras</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'Elétrica')"><span class="ic">⚡</span><span class="nm">Elétrica</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'TV / Suporte')"><span class="ic">📺</span><span class="nm">TV / Suporte</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'Notebook')"><span class="ic">💼</span><span class="nm">Notebook</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'Automação')"><span class="ic">🏠</span><span class="nm">Automação</span></div>
+            <div class="tipo-chip" onclick="selTipo(this,'Outro')"><span class="ic">🔩</span><span class="nm">Outro</span></div>
+          </div>
+          <div class="err-msg" id="e-tipo">Selecione o tipo de serviço.</div>
+        </div>
+
+        <!-- Equipamento -->
+        <div class="fg" style="margin-bottom:16px">
+          <div class="fl">
+            <label>Equipamento</label>
+            <input id="f-equip" placeholder="Ex: Notebook Dell, PC, TV 55&quot;...">
+          </div>
+          <div class="fl">
+            <label>Marca / Modelo</label>
+            <input id="f-modelo" placeholder="Ex: Dell Inspiron 15">
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="fl" style="margin-bottom:16px">
+          <label>Descreva o problema <span class="req">*</span></label>
+          <textarea id="f-prob" placeholder="Descreva em detalhes o que está acontecendo. Ex: O computador liga mas trava na inicialização, apresentando tela azul..."></textarea>
+          <div class="err-msg" id="e-prob">Por favor descreva o problema.</div>
+        </div>
+
+        <!-- Fotos -->
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:8px">Fotos do problema <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+          <div class="foto-area" onclick="document.getElementById('f-fotos').click()">
+            <input type="file" id="f-fotos" accept="image/*" multiple onchange="prevFotos(this)">
+            <div class="foto-icon">📷</div>
+            <div class="foto-text">Toque para adicionar fotos do equipamento ou problema<br><span style="font-size:10px;color:var(--muted2)">PNG, JPG até 5MB cada</span></div>
+          </div>
+          <div class="foto-preview" id="foto-preview"></div>
+        </div>
+
+        <!-- Urgência -->
+        <label style="display:block;margin-bottom:8px">Urgência</label>
+        <div class="urgencia-row" id="urg-row" onclick="toggleUrgencia()">
+          <div class="toggle" id="urg-toggle"></div>
+          <div class="urgencia-text">
+            <strong>Atendimento urgente</strong>
+            <span>Marque se o problema está causando grande impacto no momento</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="irStep1()">← Voltar</button>
+      <button class="btn btn-primary" onclick="irStep3()">Revisar →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3: RESUMO ═══ -->
+  <div id="s3" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">✅</span>
+        <div>
+          <div class="card-title">Confirmar chamado</div>
+          <div class="card-sub">Revise os dados antes de enviar</div>
+        </div>
+      </div>
+      <div class="card-body" id="summary-body">
+        <!-- preenchido via JS -->
+      </div>
+    </div>
+
+    <div style="background:rgba(124,77,255,0.06);border:1px solid rgba(124,77,255,0.2);border-radius:var(--rs);padding:14px 16px;margin-bottom:4px;font-size:12px;color:var(--muted);line-height:1.7">
+      🔒 Seus dados são usados exclusivamente para o atendimento técnico e não serão compartilhados com terceiros.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="irStep2()">← Voltar</button>
+      <button class="btn btn-primary" id="btn-enviar" onclick="enviarChamado()">📤 Enviar chamado</button>
+    </div>
+  </div>
+
+  <!-- ═══ SUCESSO ═══ -->
+  <div id="s-success" style="display:none">
+    <div class="success-wrap">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Chamado enviado!</div>
+      <div class="success-id" id="success-id">OS-0001</div>
+      <div class="success-sub">
+        Seu chamado foi registrado com sucesso. Nossa equipe entrará em contato em breve pelo WhatsApp para confirmar o atendimento.
+      </div>
+      <div class="success-steps">
+        <div class="ss-item"><div class="ss-num">1</div><div>Você receberá uma <strong>confirmação via WhatsApp</strong> em breve.</div></div>
+        <div class="ss-item"><div class="ss-num">2</div><div>Agendaremos a <strong>data e horário</strong> mais conveniente.</div></div>
+        <div class="ss-item"><div class="ss-num">3</div><div>Nosso técnico chegará no horário combinado para o <strong>diagnóstico e atendimento</strong>.</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--muted)">Dúvidas? Fale diretamente pelo WhatsApp:</div>
+      <a id="whatsapp-link" href="https://wa.me/5511995612321" target="_blank"
+        style="display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:12px 24px;background:rgba(34,215,135,0.1);border:1px solid rgba(34,215,135,0.25);border-radius:var(--rs);color:var(--green);text-decoration:none;font-weight:600;font-size:14px">
+        📱 (11) 99561-2321
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  GBR Soluções — Seu Sobrinho de Aluguel · Arujá, SP<br>
+  (11) 99561-2321 · Atendimento residencial e empresarial
+</div>
+
+<script>
+// ── Estado do formulário ──────────────────────────────────────
+const F = { nome:'', tel:'', email:'', end:'', tipo:'', equip:'', modelo:'', prob:'', urgente:false };
+let currentStep = 1;
+
+// ── Navegação de steps ────────────────────────────────────────
+function showStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('s'+i).style.display = i===n?'block':'none';
+    const ind = document.getElementById('step-ind-'+i);
+    ind.className = 'step' + (i===n?' active':i<n?' done':'');
+  });
+  [1,2].forEach(i=>{
+    const line = document.getElementById('step-line-'+i);
+    line.className = 'step-line' + (i<n?' done':'');
+  });
+  document.getElementById('s-success').style.display = 'none';
+  currentStep = n;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function irStep1(){ showStep(1); }
+
+function irStep2(){
+  // Valida step 1
+  let ok = true;
+  const nome = document.getElementById('f-nome').value.trim();
+  const tel  = document.getElementById('f-tel').value.trim();
+  const end  = document.getElementById('f-end').value.trim();
+  if(!nome){ showErr('nome',true); ok=false; } else showErr('nome',false);
+  if(!tel||tel.length<8){ showErr('tel',true); ok=false; } else showErr('tel',false);
+  if(!end){ showErr('end',true); ok=false; } else showErr('end',false);
+  if(!ok){ document.getElementById('f-nome').focus(); return; }
+  F.nome=nome; F.tel=tel; F.email=document.getElementById('f-email').value.trim(); F.end=end;
+  showStep(2);
+}
+
+function irStep3(){
+  // Valida step 2
+  let ok = true;
+  const prob = document.getElementById('f-prob').value.trim();
+  if(!F.tipo){ showErr('tipo',true); ok=false; } else showErr('tipo',false);
+  if(!prob){ showErr('prob',true); ok=false; } else showErr('prob',false);
+  if(!ok) return;
+  F.equip = document.getElementById('f-equip').value.trim();
+  F.modelo= document.getElementById('f-modelo').value.trim();
+  F.prob  = prob;
+  // Monta summary
+  buildSummary();
+  showStep(3);
+}
+
+function showErr(id, show){
+  const el = document.getElementById('e-'+id);
+  const inp= document.getElementById('f-'+id);
+  if(el) el.className = 'err-msg' + (show?' show':'');
+  if(inp) inp.className = show ? inp.tagName.toLowerCase()+' error' : inp.tagName.toLowerCase();
+}
+
+// ── Tipo chips ────────────────────────────────────────────────
+function selTipo(el, tipo){
+  document.querySelectorAll('.tipo-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  F.tipo = tipo;
+  showErr('tipo', false);
+}
+
+// ── Urgência toggle ───────────────────────────────────────────
+function toggleUrgencia(){
+  F.urgente = !F.urgente;
+  document.getElementById('urg-row').classList.toggle('active', F.urgente);
+}
+
+// ── Preview fotos ─────────────────────────────────────────────
+function prevFotos(input){
+  const prev = document.getElementById('foto-preview');
+  prev.innerHTML = '';
+  Array.from(input.files).slice(0,5).forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.className = 'foto-thumb';
+      img.src = e.target.result;
+      prev.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Summary ───────────────────────────────────────────────────
+function buildSummary(){
+  const items = [
+    ['Nome',       F.nome],
+    ['WhatsApp',   F.tel],
+    ['E-mail',     F.email||'Não informado'],
+    ['Endereço',   F.end],
+    ['Tipo',       F.tipo],
+    ['Equipamento',F.equip||(F.modelo||'Não informado')],
+    ['Urgência',   F.urgente?'⚡ SIM — Atendimento urgente':'Normal'],
+    ['Problema',   F.prob],
+  ];
+  document.getElementById('summary-body').innerHTML = items.map(([l,v])=>`
+    <div class="summary-item">
+      <div class="summary-label">${l}</div>
+      <div class="summary-val" style="${l==='Urgência'&&F.urgente?'color:var(--red);font-weight:700':''}">${v}</div>
+    </div>`).join('');
+}
+
+// ── Firebase: envia chamado ───────────────────────────────────
+const firebaseConfig = {
+  apiKey:"AIzaSyAPYCe1CJkksTdoinfLQpv6ety0OheqyOc",
+  authDomain:"sistemagbr-f6b4e.firebaseapp.com",
+  databaseURL:"https://sistemagbr-f6b4e-default-rtdb.firebaseio.com",
+  projectId:"sistemagbr-f6b4e",
+  storageBucket:"sistemagbr-f6b4e.firebasestorage.app",
+  messagingSenderId:"549796148409",
+  appId:"1:549796148409:web:cbc828cca4b114882d5768"
+};
+
+let _db = null, _firebase = null;
+
+async function initFB(){
+  if(_db) return;
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getDatabase, ref, set, push, get } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    _firebase = { getDatabase, ref, set, push, get };
+    const app = initializeApp(firebaseConfig);
+    _db = getDatabase(app);
+  } catch(e){
+    console.error('Firebase init:', e);
+  }
+}
+
+async function gerarOsId(){
+  // Lê próximo ID do Firebase de forma segura
+  try {
+    const snap = await _firebase.get(_firebase.ref(_db, 'gbr/dados/nextOS'));
+    const nextNum = snap.exists() ? (snap.val()||1) : 1;
+    // Incrementa no Firebase
+    await _firebase.set(_firebase.ref(_db, 'gbr/dados/nextOS'), nextNum + 1);
+    return 'OS-' + String(nextNum).padStart(4,'0');
+  } catch(e){
+    // Fallback: gera ID baseado em timestamp
+    return 'OS-' + Date.now().toString().slice(-4);
+  }
+}
+
+async function enviarChamado(){
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true;
+
+  const ov = document.getElementById('loading-ov');
+  document.getElementById('loading-txt').textContent = 'Conectando...';
+  ov.classList.add('show');
+
+  try {
+    document.getElementById('loading-txt').textContent = 'Enviando chamado...';
+    await initFB();
+
+    if(!_db) throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
+
+    const osId = await gerarOsId();
+    const chamado = {
+      osId,
+      nome:      F.nome,
+      tel:       F.tel,
+      email:     F.email,
+      endereco:  F.end,
+      tipo:      F.tipo,
+      equipamento: F.equip,
+      modelo:    F.modelo,
+      problema:  F.prob,
+      urgente:   F.urgente,
+      criadaEm:  new Date().toISOString(),
+      status:    'Aberta',
+      origem:    'cliente',
+      _processado: false
+    };
+
+    // Salva em gbr/chamados/{osId}
+    await _firebase.set(_firebase.ref(_db, 'gbr/chamados/' + osId), chamado);
+
+    ov.classList.remove('show');
+
+    // Mostra tela de sucesso
+    document.getElementById('steps-bar').style.display = 'none';
+    ['s1','s2','s3'].forEach(id=>{ document.getElementById(id).style.display='none'; });
+    document.getElementById('success-id').textContent = osId;
+
+    // Atualiza link do WhatsApp com mensagem pré-preenchida
+    const wamsg = encodeURIComponent(
+      `Olá! Acabei de abrir um chamado pelo site.\n\n` +
+      `*OS:* ${osId}\n*Nome:* ${F.nome}\n*Problema:* ${F.tipo} — ${F.prob.slice(0,80)}...`
+    );
+    document.getElementById('whatsapp-link').href = `https://wa.me/5511995612321?text=${wamsg}`;
+
+    document.getElementById('s-success').style.display = 'block';
+    window.scrollTo({top:0,behavior:'smooth'});
+
+  } catch(e){
+    ov.classList.remove('show');
+    btn.disabled = false;
+    alert('❌ Erro ao enviar: ' + (e.message||'Verifique sua conexão e tente novamente.'));
+  }
+}
+
+// Pré-carrega Firebase ao carregar a página
+initFB();
+</script>
+</body>
+</html>
