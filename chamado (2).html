@@ -52,7 +52,9 @@ body{
   font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
   letter-spacing:-0.8px;margin-bottom:8px;
   background:linear-gradient(135deg,var(--text),var(--primary2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
 }
 .header-sub{font-size:14px;color:var(--muted);line-height:1.6;max-width:420px;margin:0 auto;}
 
@@ -596,6 +598,9 @@ const firebaseConfig = {
 
 let _db = null, _firebase = null;
 
+// ── ImgBB: chave da API gratuita ─────────────────────────────
+const IMGBB_API_KEY = '17bfa9da3904ed43ba60d4bda3f93366';
+
 async function initFB(){
   if(_db) return;
   try {
@@ -607,6 +612,42 @@ async function initFB(){
   } catch(e){
     console.error('Firebase init:', e);
   }
+}
+
+// Faz upload de todas as fotos para o ImgBB e retorna array de URLs
+async function uploadFotos(osId){
+  const input = document.getElementById('f-fotos');
+  if(!input.files.length) return [];
+  const urls = [];
+  const files = Array.from(input.files).slice(0,5);
+  for(let i=0; i<files.length; i++){
+    const file = files[i];
+    document.getElementById('loading-txt').textContent = `Enviando foto ${i+1} de ${files.length}...`;
+    try {
+      const b64 = await fileToBase64(file);
+      const form = new FormData();
+      form.append('image', b64.split(',')[1]); // remove prefixo data:image/...;base64,
+      form.append('name', `${osId}_foto${i+1}`);
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+        method: 'POST', body: form
+      });
+      const data = await res.json();
+      if(data.success) urls.push(data.data.url);
+      else console.error('ImgBB erro:', data);
+    } catch(e){
+      console.error('Erro ao enviar foto:', e);
+    }
+  }
+  return urls;
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => resolve(r.result);
+    r.onerror = () => reject(new Error('Falha ao ler arquivo'));
+    r.readAsDataURL(file);
+  });
 }
 
 async function gerarOsId(){
@@ -638,6 +679,12 @@ async function enviarChamado(){
     if(!_db) throw new Error('Não foi possível conectar ao servidor. Tente novamente.');
 
     const osId = await gerarOsId();
+
+    // Faz upload das fotos primeiro (se houver)
+    const fotosUrls = await uploadFotos(osId);
+
+    document.getElementById('loading-txt').textContent = 'Registrando chamado...';
+
     const chamado = {
       osId,
       nome:      F.nome,
@@ -652,6 +699,7 @@ async function enviarChamado(){
       criadaEm:  new Date().toISOString(),
       status:    'Aberta',
       origem:    'cliente',
+      fotos:     fotosUrls,
       _processado: false
     };
 
