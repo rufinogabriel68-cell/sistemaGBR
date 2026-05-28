@@ -1285,17 +1285,24 @@ function rDash(){
   const osUrgentes = (S.os||[]).filter(o=>o.prioridade==='Urgente'&&!['Concluida','Entregue','Cancelada'].includes(o.status)).length;
   const osChamados = (S.os||[]).filter(o=>o.origem==='cliente'&&o.status==='Aberta').length;
 
-  let topServ, topLabel;
-  if(S.services.length > 0){
-    topServ  = [...S.services].sort((a,b)=>b.medVal-a.medVal).slice(0,5);
-    topLabel = 'Top serviços por valor médio';
-  } else {
-    const map = {};
-    aprov.forEach(o=>{ if(!map[o.tipo]) map[o.tipo]={nome:o.tipo,medVal:0,count:0}; map[o.tipo].medVal+=o.valor; map[o.tipo].count++; });
-    topServ  = Object.values(map).map(x=>({...x,medVal:Math.round(x.medVal/x.count)})).sort((a,b)=>b.medVal-a.medVal).slice(0,5);
-    topLabel = 'Top serviços executados';
-  }
-  const maxMed = topServ.length ? Math.max(...topServ.map(s=>s.medVal),1) : 1;
+  // Situações das OS
+  const osStatusList = ['Aberta','Diagnóstico','Em Execução','Aguardando Peça','Concluída','Entregue','Cancelada'];
+  const osStatusColors = {
+    'Aberta':          'var(--yellow)',
+    'Diagnóstico':     'var(--primary2)',
+    'Em Execução':     'var(--accent)',
+    'Aguardando Peça': 'var(--cyan)',
+    'Concluída':       'var(--green)',
+    'Entregue':        'var(--green)',
+    'Cancelada':       'var(--red)'
+  };
+  const osStatusEmoji = {
+    'Aberta':'🔓','Diagnóstico':'🔍','Em Execução':'⚙️',
+    'Aguardando Peça':'📦','Concluída':'✅','Entregue':'🚀','Cancelada':'❌'
+  };
+  const osStatusCount = {};
+  osStatusList.forEach(st => { osStatusCount[st] = (S.os||[]).filter(o=>o.status===st).length; });
+  const maxOsCount = Math.max(...Object.values(osStatusCount), 1);
 
   return `
   <div class="sh">
@@ -1316,12 +1323,25 @@ function rDash(){
     <div class="kpi"><div class="kpi-l">Meta mensal</div><div class="kpi-v" style="color:var(--text)">${R(S.cfg.metaMensal)}</div><div class="prog"><div class="prog-f ${pct>=100?'gr':pct>=60?'am':'re'}" style="width:${pct}%"></div></div><div class="kpi-s">${pct}% atingido</div></div>
   </div>
   <div class="row2">
-    <div class="card"><div class="card-t">🏆 ${topLabel}</div><div style="padding:14px 16px"><div class="bar-chart">
-      ${topServ.length ? topServ.map(s=>{
-        const pctBar = maxMed>0?Math.round(s.medVal/maxMed*100):0;
-        return `<div class="bar-row"><div class="bar-lbl">${s.nome.length>13?s.nome.slice(0,13)+'…':s.nome}</div><div class="bar-track"><div class="bar-f" style="width:${pctBar}%"></div></div><div class="bar-val">R$${s.medVal}</div></div>`;
-      }).join('') : `<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px">Nenhum serviço cadastrado.<br><button class="btn" style="margin-top:10px" onclick="pg('servicos')">Ir para Serviços →</button></div>`}
-    </div></div></div>
+    <div class="card" style="cursor:pointer" onclick="pg('os')"><div class="card-t">📋 Situação das OS <span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:6px">${(S.os||[]).length} total</span></div><div style="padding:14px 16px">
+      ${(S.os||[]).length === 0
+        ? `<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px">Nenhuma OS cadastrada.<br><button class="btn" style="margin-top:10px" onclick="pg('os');event.stopPropagation()">Ir para OS →</button></div>`
+        : `<div class="bar-chart">${osStatusList.map(st=>{
+            const cnt = osStatusCount[st];
+            const pct = maxOsCount>0?Math.round(cnt/maxOsCount*100):0;
+            const col = osStatusColors[st];
+            const em  = osStatusEmoji[st];
+            return `<div class="bar-row">
+              <div class="bar-lbl" style="width:115px;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                <span style="font-size:11px">${em}</span>
+                <span style="font-size:11px;color:var(--muted)">${st}</span>
+              </div>
+              <div class="bar-track"><div class="bar-f" style="width:${pct}%;background:${col};opacity:${cnt===0?'.25':'1'}"></div></div>
+              <div class="bar-val" style="color:${col};min-width:28px;text-align:right">${cnt}</div>
+            </div>`;
+          }).join('')}</div>`
+      }
+    </div></div>
     <div class="card"><div class="card-t">📱 Follow-ups pendentes</div><div style="padding:10px 16px"><div class="mini-list">
       ${S.clientes.filter(c=>c.followupData&&c.followupStatus==='Pendente').slice(0,5).map(c=>{
         const d = Math.ceil((new Date(c.followupData)-hoje)/864e5);
