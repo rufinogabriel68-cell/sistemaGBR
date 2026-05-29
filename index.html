@@ -883,12 +883,95 @@ tr:hover td { background: var(--surface2); }
   .os-card-main > div { text-align: left !important; min-width: auto !important; }
   .os-card-actions { flex-direction: row !important; width: 100%; }
   .os-card-actions button { flex: 1; }
+
+  /* ── SWIPE CARDS mobile (substitui tabela em Orçamentos/CRM) ── */
+  .mobile-card-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+  .swipe-card-wrap {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    touch-action: pan-y;
+    user-select: none;
+  }
+  /* Painel de ações que fica atrás (revelado ao deslizar) */
+  .swipe-actions {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    display: flex;
+    align-items: stretch;
+  }
+  .swipe-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    font-size: 18px;
+    gap: 3px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 62px;
+    transition: opacity .15s;
+    color: #fff;
+  }
+  .swipe-action-btn .sa-icon { font-size: 18px; }
+  .swipe-action-btn.sa-view   { background: var(--surface4); color: var(--primary2); }
+  .swipe-action-btn.sa-edit   { background: rgba(20,184,166,.85); }
+  .swipe-action-btn.sa-dup    { background: rgba(124,77,255,.85); }
+  .swipe-action-btn.sa-del    { background: rgba(255,78,106,.85); }
+  /* O card em si, que desliza */
+  .swipe-card-inner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    position: relative;
+    z-index: 2;
+    transition: transform .15s ease, box-shadow .15s;
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .swipe-card-wrap.swiped .swipe-card-inner {
+    box-shadow: -4px 0 16px rgba(0,0,0,.3);
+  }
+  .swipe-card-row1 {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .swipe-card-name { font-weight: 700; font-size: 14px; color: var(--text); }
+  .swipe-card-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .swipe-card-row2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .swipe-card-valor { font-weight: 800; font-size: 15px; color: var(--primary2); font-family: 'Syne', sans-serif; }
+  .swipe-card-lucro { font-size: 11px; color: var(--green); }
+  .swipe-card-hint  {
+    font-size: 10px; color: var(--muted2);
+    text-align: center; margin-top: 4px;
+    display: flex; align-items: center; justify-content: flex-end; gap: 4px;
+  }
+  /* Esconde a tabela normal no mobile para as páginas que usam card */
+  .mobile-hide-table { display: none !important; }
+  .mobile-show-cards { display: flex !important; }
 }
 
 /* Desktop: esconde elementos mobile */
 .mobile-header { display: none; }
 .bottom-nav { display: none; }
 .sidebar-header-mobile { display: none; }
+/* Mobile card lists: escondidas no desktop */
+.mobile-card-list { display: none; }
 
 
 /* Mobile: oculta topbar da sidebar (substitui por title na topbar principal) */
@@ -1242,7 +1325,20 @@ function render(){
                  estoque:rEstoque, agenda:rAgenda, fin:rFin, notas:rNotas, os:rOS, pdf:rPDF, config:rConfig};
   el.innerHTML = (pages[S.page] || rDash)();
   bindSearchInputs();
+  applyMobileTableToggle();
 }
+
+// Mostra cards e esconde tabela no mobile (≤768px); inverso no desktop
+function applyMobileTableToggle(){
+  const isMobile = window.innerWidth <= 768;
+  // Tabelas de orçamentos
+  const tbl = document.getElementById('orc-table-wrap');
+  const cds = document.getElementById('orc-cards-wrap');
+  if(tbl) tbl.style.display = isMobile ? 'none' : '';
+  if(cds) cds.style.display = isMobile ? 'flex' : 'none';
+}
+
+window.addEventListener('resize', applyMobileTableToggle);
 
 function bindSearchInputs(){
   const osSearch = document.getElementById('os-search');
@@ -1470,6 +1566,35 @@ function rOrc(){
   const q    = S.orcQ.toLowerCase();
   const f    = S.orc.filter(o=>!q||o.cliente.toLowerCase().includes(q)||o.tipo.toLowerCase().includes(q)||o.status.toLowerCase().includes(q));
   const aprov= S.orc.filter(o=>o.status==='Aprovado');
+
+  // Cards mobile com swipe para revelar ações
+  const mobileCards = f.length === 0
+    ? `<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">Nenhum orçamento encontrado</div>`
+    : f.map(o=>`
+  <div class="swipe-card-wrap" id="swwrap-${o.id}">
+    <div class="swipe-actions">
+      <button class="swipe-action-btn sa-view"   onclick="mVerOrc('${o.id}');swipeClose('${o.id}')"><span class="sa-icon">👁</span>Ver</button>
+      <button class="swipe-action-btn sa-edit"   onclick="mEditOrc('${o.id}');swipeClose('${o.id}')"><span class="sa-icon">✏️</span>Editar</button>
+      <button class="swipe-action-btn sa-dup"    onclick="dupOrc('${o.id}');swipeClose('${o.id}')"><span class="sa-icon">📄</span>Copiar</button>
+      <button class="swipe-action-btn sa-del"    onclick="delOrc('${o.id}')"><span class="sa-icon">🗑</span>Excluir</button>
+    </div>
+    <div class="swipe-card-inner" id="swinner-${o.id}">
+      <div class="swipe-card-row1">
+        <div>
+          <div class="swipe-card-name">${o.cliente}</div>
+          <div class="swipe-card-sub">${o.tipo}</div>
+        </div>
+        <span class="badge ${o.status==='Aprovado'?'gr':o.status==='Aguardando'?'am':'re'}">${o.status}</span>
+      </div>
+      <div class="swipe-card-row2">
+        <span class="swipe-card-valor">R$${o.valor}</span>
+        <span class="swipe-card-lucro">lucro R$${o.lucro}</span>
+        <span style="font-size:10px;color:var(--muted);margin-left:auto">${o.data}</span>
+      </div>
+      <div class="swipe-card-hint">← deslize para ações</div>
+    </div>
+  </div>`).join('');
+
   return `
   <div class="sh"><div class="sh-t">Orçamentos</div><button class="btn" onclick="mNovoOrc()">+ Novo</button></div>
   <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
@@ -1479,7 +1604,8 @@ function rOrc(){
     <div class="kpi re"><div class="kpi-l">Recusados</div><div class="kpi-v">${S.orc.filter(o=>o.status==='Recusado').length}</div></div>
   </div>
   <input id="orc-search" class="sb" style="margin-bottom:12px" placeholder="🔍 Buscar por cliente, serviço ou status..." value="${S.orcQ}">
-  <div class="tw"><table><thead><tr><th style="width:8%">Nº</th><th style="width:17%">Cliente</th><th style="width:20%">Serviço</th><th style="width:10%">Data</th><th style="width:10%">Valor</th><th style="width:9%">Lucro</th><th style="width:10%">Status</th><th style="width:16%">Ações</th></tr></thead>
+  <!-- TABELA (visível no desktop) -->
+  <div class="tw" id="orc-table-wrap"><table><thead><tr><th style="width:8%">Nº</th><th style="width:17%">Cliente</th><th style="width:20%">Serviço</th><th style="width:10%">Data</th><th style="width:10%">Valor</th><th style="width:9%">Lucro</th><th style="width:10%">Status</th><th style="width:16%">Ações</th></tr></thead>
   <tbody>${f.map(o=>`<tr>
     <td style="color:var(--muted);font-size:10px">${o.id}</td>
     <td><div style="font-weight:600">${o.cliente}</div><div style="font-size:10px;color:var(--muted)">${o.tel}</div></td>
@@ -1494,7 +1620,9 @@ function rOrc(){
       <button class="btn ghost sm" onclick="dupOrc('${o.id}')">📄</button>
       <button class="btn danger sm" onclick="delOrc('${o.id}')">🗑</button>
     </div></td>
-  </tr>`).join('')}</tbody></table></div>`;
+  </tr>`).join('')}</tbody></table></div>
+  <!-- CARDS (visíveis no mobile) -->
+  <div class="mobile-card-list" id="orc-cards-wrap">${mobileCards}</div>`;
 }
 
 // ═══════════════════════════════════════════
@@ -3909,6 +4037,127 @@ document.addEventListener('keydown', function(e){
   }
 });
 
+
+// ══════════════════════════════════════════════════════════════
+//  SWIPE CARDS — motor de touch para os cards mobile
+// ══════════════════════════════════════════════════════════════
+
+(function(){
+  const THRESHOLD   = 50;   // px para confirmar o swipe
+  const MAX_REVEAL  = 250;  // px máximo revelado (largura dos 4 botões)
+
+  let activeWrap = null;    // card atualmente aberto
+
+  function getWrapById(id){ return document.getElementById('swwrap-'+id); }
+  function getInnerById(id){ return document.getElementById('swinner-'+id); }
+
+  // Fecha o card atualmente aberto
+  window.swipeClose = function(id){
+    const inner = getInnerById(id);
+    const wrap  = getWrapById(id);
+    if(!inner) return;
+    inner.style.transform = 'translateX(0)';
+    if(wrap) wrap.classList.remove('swiped');
+    if(activeWrap && activeWrap === wrap) activeWrap = null;
+  };
+
+  function closeAll(exceptWrap){
+    document.querySelectorAll('.swipe-card-wrap.swiped').forEach(w=>{
+      if(w !== exceptWrap){
+        const inner = w.querySelector('.swipe-card-inner');
+        if(inner) inner.style.transform = 'translateX(0)';
+        w.classList.remove('swiped');
+      }
+    });
+  }
+
+  // Calcula a largura real dos botões de ação
+  function actionsWidth(wrap){
+    const actions = wrap.querySelector('.swipe-actions');
+    return actions ? actions.offsetWidth : MAX_REVEAL;
+  }
+
+  // Delegação de eventos: escuta todos os toques no document
+  document.addEventListener('touchstart', function(e){
+    const wrap = e.target.closest('.swipe-card-wrap');
+    if(!wrap) return;
+    const inner = wrap.querySelector('.swipe-card-inner');
+    if(!inner) return;
+
+    const t0 = e.touches[0];
+    let startX = t0.clientX;
+    let startY = t0.clientY;
+    let currentX = startX;
+    let dx = 0;
+    let moved = false;
+    let isHorizontal = null;
+
+    // Estado inicial (pode já estar aberto)
+    const startOffset = wrap.classList.contains('swiped') ? -actionsWidth(wrap) : 0;
+
+    function onMove(ev){
+      const t = ev.touches[0];
+      dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+
+      // Detecta direção predominante na primeira movimentação
+      if(isHorizontal === null && (Math.abs(dx) > 4 || Math.abs(dy) > 4)){
+        isHorizontal = Math.abs(dx) > Math.abs(dy);
+      }
+      if(!isHorizontal) return; // scroll vertical — ignora
+
+      ev.preventDefault();
+      moved = true;
+
+      const maxRev = actionsWidth(wrap);
+      let newX = Math.max(-maxRev, Math.min(0, startOffset + dx));
+      inner.style.transition = 'none';
+      inner.style.transform  = `translateX(${newX}px)`;
+    }
+
+    function onEnd(){
+      inner.style.transition = '';
+      if(!moved){ cleanup(); return; }
+
+      const maxRev = actionsWidth(wrap);
+      const cur    = startOffset + dx;
+
+      if(cur < -THRESHOLD){
+        // Abrir: revela ações
+        closeAll(wrap);
+        inner.style.transform = `translateX(-${maxRev}px)`;
+        wrap.classList.add('swiped');
+        activeWrap = wrap;
+      } else {
+        // Fechar
+        inner.style.transform = 'translateX(0)';
+        wrap.classList.remove('swiped');
+        if(activeWrap === wrap) activeWrap = null;
+      }
+      cleanup();
+    }
+
+    function cleanup(){
+      wrap.removeEventListener('touchmove', onMove);
+      wrap.removeEventListener('touchend',  onEnd);
+    }
+
+    wrap.addEventListener('touchmove', onMove, { passive: false });
+    wrap.addEventListener('touchend',  onEnd);
+  }, { passive: true });
+
+  // Toque fora de qualquer card fecha todos
+  document.addEventListener('touchstart', function(e){
+    if(!e.target.closest('.swipe-card-wrap')){
+      document.querySelectorAll('.swipe-card-wrap.swiped').forEach(w=>{
+        const inner = w.querySelector('.swipe-card-inner');
+        if(inner) inner.style.transform = 'translateX(0)';
+        w.classList.remove('swiped');
+      });
+    }
+  }, { passive: true });
+
+})();
 
 // ══ START ══
 render();
