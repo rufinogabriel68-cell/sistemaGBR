@@ -838,12 +838,17 @@ tr:hover td { background: var(--surface2); }
     border-radius: 12px;
     padding: 8px;
     min-width: 160px;
+    max-height: 320px;
+    overflow-y: auto;
     box-shadow: 0 -8px 32px rgba(0,0,0,.4);
     display: none;
     flex-direction: column;
     gap: 2px;
   }
   .bottom-nav-more-menu.show { display: flex; }
+  .bottom-nav-more-menu::-webkit-scrollbar { width: 3px; }
+  .bottom-nav-more-menu::-webkit-scrollbar-track { background: transparent; }
+  .bottom-nav-more-menu::-webkit-scrollbar-thumb { background: var(--surface4); border-radius: 3px; }
   .bottom-nav-more-menu .bnm-item {
     display: flex;
     align-items: center;
@@ -978,6 +983,7 @@ tr:hover td { background: var(--surface2); }
 
 </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -1087,20 +1093,20 @@ tr:hover td { background: var(--surface2); }
       <span class="bn-icon">📋</span>
       <span class="bn-label">Orç.</span>
     </button>
-    <button class="bn-item" data-page="calc" onclick="pg('calc'); updateBottomNav('calc')">
-      <span class="bn-icon">🧮</span>
-      <span class="bn-label">Calc</span>
+    <button class="bn-item" data-page="crm" onclick="pg('crm'); hideMoreMenu(); updateBottomNav('crm')">
+      <span class="bn-icon">👥</span>
+      <span class="bn-label">CRM</span>
     </button>
     <button class="bn-item bn-more" onclick="toggleMoreMenu()">
       <span class="bn-icon">⋮</span>
       <span class="bn-label">Mais</span>
     </button>
     <div class="bottom-nav-more-menu" id="bn-more-menu">
-      <button class="bnm-item" data-page="servicos" onclick="pg('servicos'); hideMoreMenu(); updateBottomNav('servicos')">🔧 Serviços</button>
-      <button class="bnm-item" data-page="crm" onclick="pg('crm'); hideMoreMenu(); updateBottomNav('crm')">👥 CRM</button>
       <button class="bnm-item" data-page="estoque" onclick="pg('estoque'); hideMoreMenu(); updateBottomNav('estoque')">📦 Estoque</button>
       <button class="bnm-item" data-page="agenda" onclick="pg('agenda'); hideMoreMenu(); updateBottomNav('agenda')">📅 Agenda</button>
       <button class="bnm-item" data-page="fin" onclick="pg('fin'); hideMoreMenu(); updateBottomNav('fin')">💰 Financeiro</button>
+      <button class="bnm-item" data-page="servicos" onclick="pg('servicos'); hideMoreMenu(); updateBottomNav('servicos')">🔧 Serviços</button>
+      <button class="bnm-item" data-page="calc" onclick="pg('calc'); hideMoreMenu(); updateBottomNav('calc')">🧮 Calculadora</button>
       <button class="bnm-item" data-page="notas" onclick="pg('notas'); hideMoreMenu(); updateBottomNav('notas')">📝 Notas</button>
       <button class="bnm-item" data-page="pdf" onclick="pg('pdf'); hideMoreMenu(); updateBottomNav('pdf')">📄 PDF</button>
       <button class="bnm-item" data-page="config" onclick="pg('config'); hideMoreMenu(); updateBottomNav('config')">⚙️ Config</button>
@@ -1635,7 +1641,6 @@ function rCRM(){
     <div style="display:flex;gap:6px">
       ${S.crmTab==='clientes'?'<button class="btn" onclick="mNovoCli()">+ Cliente</button>':''}
       ${S.crmTab==='leads'?'<button class="btn" onclick="mNovoLead()">+ Lead</button>':''}
-      ${S.crmTab==='garantias'?'<button class="btn" onclick="mNovaGar()">+ Garantia</button>':''}
     </div>
   </div>
   <div class="stabs">${Object.entries(tabLabels).map(([k,v])=>`<button class="stab ${S.crmTab===k?'active':''}" onclick="S.crmTab='${k}';render()">${v}</button>`).join('')}</div>
@@ -1704,7 +1709,15 @@ function rLeads(){
 }
 
 function rGarantias(){
+  const vencidas = S.garantias.filter(g=>dR(g.dataServico,g.diasGarantia)<=0);
   return `
+  <div class="sh" style="margin-bottom:12px">
+    <div></div>
+    <div style="display:flex;gap:6px">
+      ${vencidas.length>0?`<button class="btn danger sm" onclick="removerGarantiasVencidas()">🗑 Remover ${vencidas.length} vencida(s)</button>`:''}
+      <button class="btn" onclick="mNovaGar()">+ Garantia</button>
+    </div>
+  </div>
   <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
     <div class="kpi gr"><div class="kpi-l">Ativas</div><div class="kpi-v">${S.garantias.filter(g=>dR(g.dataServico,g.diasGarantia)>0).length}</div></div>
     <div class="kpi am"><div class="kpi-l">Vencendo (7d)</div><div class="kpi-v">${S.garantias.filter(g=>{const d=dR(g.dataServico,g.diasGarantia);return d>0&&d<=7;}).length}</div></div>
@@ -2555,6 +2568,16 @@ function salvarGasto(){
   closeM(); render(); auto();
 }
 function delGasto(idx){ if(confirm('Excluir este gasto?')){ S.gastos.splice(idx,1); render(); auto(); } }
+
+function removerGarantiasVencidas(){
+  const vencidas = S.garantias.filter(g=>dR(g.dataServico,g.diasGarantia)<=0);
+  if(vencidas.length===0){ alert('Nenhuma garantia vencida para remover.'); return; }
+  if(!confirm(`Remover ${vencidas.length} garantia(s) vencida(s)?
+
+Isso não pode ser desfeito.`)) return;
+  S.garantias = S.garantias.filter(g=>dR(g.dataServico,g.diasGarantia)>0);
+  render(); auto();
+}
 
 // ── Receitas extras ──
 function mNovaRecExtra(){
